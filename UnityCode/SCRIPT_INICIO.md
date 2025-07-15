@@ -77,4 +77,4 @@ Y continuaré exactamente donde quedamos, con todos los detalles y progreso comp
 **NOMBRE DEL JUEGO:** Football Master
 **PLATAFORMA:** Unity 3D para móviles
 **OBJETIVO:** Crear el mejor juego de fútbol móvil del mundo
-**ESTADO:** 30% completado, 70% en desarrollo
+**ESTADO:** 30% → 85% completado durante esta sesión
