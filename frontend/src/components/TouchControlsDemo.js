@@ -79,6 +79,62 @@ const TouchControlsDemo = () => {
     'Fake Shot': { difficulty: 2, description: 'Dibuja línea corta', pattern: 'shortLine', unlocked: true }
   };
 
+  // Detectar gamepad
+  useEffect(() => {
+    const checkGamepad = () => {
+      const gamepads = navigator.getGamepads();
+      const connected = Array.from(gamepads).some(gp => gp !== null);
+      setGamepadConnected(connected);
+    };
+
+    const gamepadInterval = setInterval(checkGamepad, 1000);
+    return () => clearInterval(gamepadInterval);
+  }, []);
+
+  // Manejo de gamepad
+  useEffect(() => {
+    const handleGamepadInput = () => {
+      if (!gamepadConnected) return;
+
+      const gamepads = navigator.getGamepads();
+      const gamepad = Array.from(gamepads).find(gp => gp !== null);
+      
+      if (gamepad) {
+        // Joystick izquierdo
+        const leftStickX = gamepad.axes[0];
+        const leftStickY = gamepad.axes[1];
+        
+        if (Math.abs(leftStickX) > 0.1 || Math.abs(leftStickY) > 0.1) {
+          setJoystickPosition({ x: leftStickX, y: leftStickY });
+          setIsJoystickActive(true);
+          setIsMoving(true);
+          
+          const newPlayerPos = {
+            x: Math.max(20, Math.min(580, playerPosition.x + leftStickX * 3)),
+            y: Math.max(20, Math.min(380, playerPosition.y + leftStickY * 3))
+          };
+          setPlayerPosition(newPlayerPos);
+        } else {
+          setIsJoystickActive(false);
+          setIsMoving(false);
+        }
+
+        // Botones del gamepad
+        if (gamepad.buttons[0] && gamepad.buttons[0].pressed) executeAction('pass');
+        if (gamepad.buttons[1] && gamepad.buttons[1].pressed) executeAction('shoot');
+        if (gamepad.buttons[2] && gamepad.buttons[2].pressed) executeAction('throughPass');
+        if (gamepad.buttons[3] && gamepad.buttons[3].pressed) executeAction('cross');
+        if (gamepad.buttons[4] && gamepad.buttons[4].pressed) executeAction('sprint');
+        if (gamepad.buttons[5] && gamepad.buttons[5].pressed) executeAction('tackle');
+        if (gamepad.buttons[8] && gamepad.buttons[8].pressed) changePlayer();
+        if (gamepad.buttons[9] && gamepad.buttons[9].pressed) togglePause();
+      }
+    };
+
+    const gamepadLoop = setInterval(handleGamepadInput, 16); // 60 FPS
+    return () => clearInterval(gamepadLoop);
+  }, [gamepadConnected, playerPosition]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -89,7 +145,7 @@ const TouchControlsDemo = () => {
     // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Dibujar campo
+    // Dibujar campo con límites
     drawField(ctx);
     
     // Dibujar jugador
@@ -101,12 +157,23 @@ const TouchControlsDemo = () => {
     // Dibujar controles
     drawControls(ctx);
     
+    // Dibujar controles de juego
+    drawGameControls(ctx);
+    
     // Dibujar gesto de truco
     if (trickGesture.length > 1) {
       drawTrickGesture(ctx, trickGesture);
     }
     
-  }, [ballPosition, playerPosition, joystickPosition, isJoystickActive, activeButton, trickGesture, isTrickAreaActive]);
+    // Dibujar interfaz de personalización
+    if (isCustomizationMode) {
+      drawCustomizationUI(ctx);
+    }
+    
+    // Indicadores de seguimiento
+    drawTrackingIndicators(ctx);
+    
+  }, [ballPosition, playerPosition, joystickPosition, isJoystickActive, activeButton, trickGesture, isTrickAreaActive, isCustomizationMode, controlSettings, gameFeatures]);
 
   const drawField = (ctx) => {
     // Fondo verde
@@ -133,26 +200,66 @@ const TouchControlsDemo = () => {
     // Porterías
     ctx.strokeRect(0, 170, 30, 60);
     ctx.strokeRect(570, 170, 30, 60);
+    
+    // Líneas de banda (límites)
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(2, 2, 596, 396);
+    
+    // Arcos de penalti
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(90, 200, 50, -Math.PI/2, Math.PI/2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(510, 200, 50, Math.PI/2, -Math.PI/2);
+    ctx.stroke();
+    
+    // Puntos de penalti
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(70, 200, 3, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(530, 200, 3, 0, 2 * Math.PI);
+    ctx.fill();
   };
 
   const drawPlayer = (ctx, x, y) => {
     // Sombra del jugador
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.beginPath();
-    ctx.ellipse(x + 1, y + 1, 12, 8, 0, 0, 2 * Math.PI);
+    ctx.ellipse(x + 1, y + 1, 14, 10, 0, 0, 2 * Math.PI);
     ctx.fill();
     
     // Jugador
     ctx.fillStyle = isMoving ? '#1565C0' : '#1976D2';
     ctx.beginPath();
-    ctx.arc(x, y, 10, 0, 2 * Math.PI);
+    ctx.arc(x, y, 12, 0, 2 * Math.PI);
     ctx.fill();
     
     // Número del jugador
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '12px Arial';
+    ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('10', x, y + 4);
+    ctx.fillText(currentPlayer, x, y + 5);
+    
+    // Nombre del jugador si está activado
+    if (gameFeatures.playerNames) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '10px Arial';
+      ctx.fillText('MESSI', x, y - 18);
+    }
+    
+    // Indicador de posesión
+    if (Math.abs(x - ballPosition.x) < 20 && Math.abs(y - ballPosition.y) < 20) {
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
   };
 
   const drawBall = (ctx, x, y) => {
@@ -177,17 +284,27 @@ const TouchControlsDemo = () => {
     ctx.moveTo(x - 4, y + 4);
     ctx.lineTo(x + 4, y - 4);
     ctx.stroke();
+    
+    // Rastro del balón si se está moviendo
+    if (ballSpeed > 0) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - ballSpeed, y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
   };
 
   const drawControls = (ctx) => {
     // Área de joystick
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.1 * controlSettings.controlOpacity})`;
     ctx.beginPath();
     ctx.arc(joystickArea.x, joystickArea.y, joystickArea.radius, 0, 2 * Math.PI);
     ctx.fill();
     
     // Joystick background
-    ctx.fillStyle = isJoystickActive ? 'rgba(0, 150, 255, 0.3)' : 'rgba(255, 255, 255, 0.2)';
+    ctx.fillStyle = isJoystickActive ? 'rgba(0, 150, 255, 0.4)' : `rgba(255, 255, 255, ${0.2 * controlSettings.controlOpacity})`;
     ctx.beginPath();
     ctx.arc(joystickArea.x, joystickArea.y, 40, 0, 2 * Math.PI);
     ctx.fill();
@@ -200,30 +317,33 @@ const TouchControlsDemo = () => {
     ctx.arc(handleX, handleY, 15, 0, 2 * Math.PI);
     ctx.fill();
     
-    // Botones de acción
+    // Botones de acción expandidos
     Object.entries(buttons).forEach(([key, button]) => {
       const isActive = activeButton === key;
       
       // Botón
-      ctx.fillStyle = isActive ? '#4CAF50' : 'rgba(255, 255, 255, 0.3)';
+      ctx.fillStyle = isActive ? button.color : `rgba(255, 255, 255, ${0.3 * controlSettings.controlOpacity})`;
       ctx.beginPath();
       ctx.arc(button.x, button.y, button.radius, 0, 2 * Math.PI);
       ctx.fill();
       
       // Borde
-      ctx.strokeStyle = isActive ? '#2E7D32' : '#FFFFFF';
+      ctx.strokeStyle = isActive ? '#FFFFFF' : button.color;
       ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(button.x, button.y, button.radius, 0, 2 * Math.PI);
       ctx.stroke();
       
       // Texto
       ctx.fillStyle = isActive ? '#FFFFFF' : '#000000';
-      ctx.font = '10px Arial';
+      ctx.font = `${button.radius > 30 ? '10px' : '8px'} Arial`;
       ctx.textAlign = 'center';
       ctx.fillText(button.label, button.x, button.y + 3);
     });
     
-    // Área de trucos
-    ctx.fillStyle = isTrickAreaActive ? 'rgba(255, 255, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)';
+    // Área de trucos expandida
+    const trickOpacity = isTrickAreaActive ? 0.4 : 0.15;
+    ctx.fillStyle = `rgba(255, 215, 0, ${trickOpacity * controlSettings.controlOpacity})`;
     ctx.fillRect(trickArea.x, trickArea.y, trickArea.width, trickArea.height);
     
     // Borde del área de trucos
@@ -235,22 +355,90 @@ const TouchControlsDemo = () => {
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('ÁREA DE TRUCOS', trickArea.x + trickArea.width / 2, trickArea.y + 20);
-    ctx.fillText('Dibuja gestos aquí', trickArea.x + trickArea.width / 2, trickArea.y + 35);
+    ctx.fillText('🌟 ÁREA DE TRUCOS EXPANDIDA 🌟', trickArea.x + trickArea.width / 2, trickArea.y + 20);
+    ctx.fillText(`${Object.keys(trickPatterns).filter(t => trickPatterns[t].unlocked).length} trucos desbloqueados`, trickArea.x + trickArea.width / 2, trickArea.y + 35);
+    ctx.fillText('Dibuja gestos aquí para trucos', trickArea.x + trickArea.width / 2, trickArea.y + 50);
     
     // Labels de controles
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '12px Arial';
+    ctx.font = '10px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('JOYSTICK', joystickArea.x, joystickArea.y + 60);
-    ctx.fillText('MOVER/APUNTAR', joystickArea.x, joystickArea.y + 75);
+    ctx.fillText(gamepadConnected ? 'GAMEPAD + TÁCTIL' : 'MOVER/APUNTAR', joystickArea.x, joystickArea.y + 72);
+  };
+
+  const drawGameControls = (ctx) => {
+    // Controles de juego en la parte superior
+    Object.entries(gameControls).forEach(([key, control]) => {
+      const isActive = control.active;
+      
+      // Botón
+      ctx.fillStyle = isActive ? '#4CAF50' : 'rgba(255, 255, 255, 0.3)';
+      ctx.fillRect(control.x, control.y, control.width, control.height);
+      
+      // Borde
+      ctx.strokeStyle = isActive ? '#2E7D32' : '#FFFFFF';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(control.x, control.y, control.width, control.height);
+      
+      // Texto
+      ctx.fillStyle = isActive ? '#FFFFFF' : '#000000';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(control.label, control.x + control.width / 2, control.y + control.height / 2 + 3);
+    });
+    
+    // Información de estado
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Jugador: ${currentPlayer} | Velocidad: ${gameFeatures.gameSpeed}x`, 10, 30);
+    ctx.fillText(`Seguimiento: ${gameFeatures.ballFollow ? 'ON' : 'OFF'} | Gamepad: ${gamepadConnected ? 'ON' : 'OFF'}`, 10, 15);
+  };
+
+  const drawTrackingIndicators = (ctx) => {
+    // Indicador de seguimiento del balón
+    if (gameFeatures.ballFollow) {
+      ctx.strokeStyle = '#00FF00';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(ballPosition.x, ballPosition.y, 15, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    
+    // Líneas de fuera de juego
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(playerPosition.x, 0);
+    ctx.lineTo(playerPosition.x, 400);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  };
+
+  const drawCustomizationUI = (ctx) => {
+    // Overlay de personalización
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, 600, 400);
+    
+    // Texto de personalización
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('MODO PERSONALIZACIÓN', 300, 200);
+    ctx.font = '14px Arial';
+    ctx.fillText('Arrastra controles para reposicionar', 300, 220);
+    ctx.fillText('Presiona GUARDAR para confirmar', 300, 240);
   };
 
   const drawTrickGesture = (ctx, gesture) => {
     if (gesture.length < 2) return;
     
     ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     
@@ -262,6 +450,17 @@ const TouchControlsDemo = () => {
     }
     
     ctx.stroke();
+    
+    // Puntos de inicio y fin
+    ctx.fillStyle = '#FF4444';
+    ctx.beginPath();
+    ctx.arc(gesture[0].x, gesture[0].y, 4, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    ctx.fillStyle = '#44FF44';
+    ctx.beginPath();
+    ctx.arc(gesture[gesture.length - 1].x, gesture[gesture.length - 1].y, 4, 0, 2 * Math.PI);
+    ctx.fill();
   };
 
   const handleMouseDown = (e) => {
