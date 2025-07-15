@@ -945,10 +945,10 @@ const TouchControlsDemo = () => {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+    <div className="max-w-7xl mx-auto p-6 bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
       <div className="bg-white rounded-xl shadow-2xl p-8">
         <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
-          ⚽ Football Master - Controles Híbridos
+          ⚽ Football Master - Sistema Avanzado de Controles
         </h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -956,7 +956,7 @@ const TouchControlsDemo = () => {
           <div className="lg:col-span-2">
             <div className="bg-gradient-to-br from-green-600 to-green-700 p-4 rounded-lg">
               <h2 className="text-xl font-semibold text-white mb-4 text-center">
-                🎮 Demo Interactiva - Controles Híbridos
+                🎮 Demo Interactiva - {gamepadConnected ? 'Gamepad + ' : ''}Controles Híbridos
               </h2>
               
               <div className="bg-white p-4 rounded-lg">
@@ -973,38 +973,68 @@ const TouchControlsDemo = () => {
                 />
               </div>
               
-              <div className="mt-4 text-center">
+              <div className="mt-4 flex flex-wrap gap-2 justify-center">
                 <button
                   onClick={resetDemo}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
                 >
-                  🔄 Reiniciar Demo
+                  🔄 Reiniciar
                 </button>
+                <button
+                  onClick={toggleCustomization}
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                >
+                  ⚙️ Personalizar
+                </button>
+                {isCustomizationMode && (
+                  <button
+                    onClick={saveCustomization}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                  >
+                    💾 Guardar
+                  </button>
+                )}
               </div>
             </div>
             
             {/* Información en tiempo real */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-100 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-800 mb-2">🎯 Estado Actual</h3>
-                <p className="text-blue-700">
-                  <strong>Jugador:</strong> {isMoving ? 'Moviéndose' : 'Parado'}
+                <h3 className="font-semibold text-blue-800 mb-2">🎯 Estado del Juego</h3>
+                <p className="text-blue-700 text-sm">
+                  <strong>Jugador:</strong> {currentPlayer} ({isMoving ? 'Moviéndose' : 'Parado'})
                 </p>
-                <p className="text-blue-700">
-                  <strong>Joystick:</strong> {isJoystickActive ? 'Activo' : 'Inactivo'}
+                <p className="text-blue-700 text-sm">
+                  <strong>Balón:</strong> Velocidad {ballSpeed.toFixed(1)}
                 </p>
-                <p className="text-blue-700">
-                  <strong>Botón:</strong> {activeButton || 'Ninguno'}
+                <p className="text-blue-700 text-sm">
+                  <strong>Seguimiento:</strong> {gameFeatures.ballFollow ? 'ON' : 'OFF'}
                 </p>
               </div>
               
               <div className="bg-green-100 p-4 rounded-lg">
                 <h3 className="font-semibold text-green-800 mb-2">🌟 Truco Detectado</h3>
-                <p className="text-green-700">
+                <p className="text-green-700 text-sm">
                   <strong>Último truco:</strong> {detectedTrick || 'Ninguno'}
                 </p>
-                <p className="text-green-700">
-                  <strong>Área de trucos:</strong> {isTrickAreaActive ? 'Activa' : 'Inactiva'}
+                <p className="text-green-700 text-sm">
+                  <strong>Área activa:</strong> {isTrickAreaActive ? 'SÍ' : 'NO'}
+                </p>
+                <p className="text-green-700 text-sm">
+                  <strong>Desbloqueados:</strong> {Object.keys(trickPatterns).filter(t => trickPatterns[t].unlocked).length}/12
+                </p>
+              </div>
+              
+              <div className="bg-purple-100 p-4 rounded-lg">
+                <h3 className="font-semibold text-purple-800 mb-2">🎮 Controles</h3>
+                <p className="text-purple-700 text-sm">
+                  <strong>Gamepad:</strong> {gamepadConnected ? 'Conectado' : 'Desconectado'}
+                </p>
+                <p className="text-purple-700 text-sm">
+                  <strong>Botón activo:</strong> {activeButton || 'Ninguno'}
+                </p>
+                <p className="text-purple-700 text-sm">
+                  <strong>Personalización:</strong> {isCustomizationMode ? 'ON' : 'OFF'}
                 </p>
               </div>
             </div>
@@ -1015,99 +1045,190 @@ const TouchControlsDemo = () => {
             {/* Controles Básicos */}
             <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-lg text-white">
               <h3 className="text-xl font-semibold mb-4">🎮 Controles Básicos</h3>
-              <div className="space-y-3">
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-100">🕹️ Joystick Virtual</div>
-                  <div className="text-sm text-blue-50">Mover jugador y apuntar</div>
+              <div className="space-y-2">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-blue-100 text-sm">🕹️ Joystick Virtual</div>
+                  <div className="text-xs text-blue-50">Mover jugador y apuntar</div>
                 </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-100">🔘 Botón PASE</div>
-                  <div className="text-sm text-blue-50">Pasar balón a compañero</div>
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-blue-100 text-sm">🔘 PASE / DISPARO</div>
+                  <div className="text-xs text-blue-50">Pase normal / Disparo a portería</div>
                 </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-100">🔘 Botón DISPARO</div>
-                  <div className="text-sm text-blue-50">Disparar a portería</div>
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-blue-100 text-sm">🔘 PASE PROF / CENTRO</div>
+                  <div className="text-xs text-blue-50">Pase profundo / Centro al área</div>
                 </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-100">🔘 Botón SPRINT</div>
-                  <div className="text-sm text-blue-50">Correr más rápido</div>
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-blue-100 text-sm">🔘 SPRINT / TACKLE</div>
+                  <div className="text-xs text-blue-50">Correr más rápido / Entrada</div>
                 </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <div className="font-semibold text-blue-100">🔘 Botón TACKLE</div>
-                  <div className="text-sm text-blue-50">Entrada/Robar balón</div>
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-blue-100 text-sm">🔘 BARRIDA / PEDIR</div>
+                  <div className="text-xs text-blue-50">Barrida / Pedir balón</div>
                 </div>
               </div>
             </div>
             
-            {/* Área de Trucos */}
+            {/* Controles de Juego */}
+            <div className="bg-gradient-to-br from-green-600 to-green-700 p-6 rounded-lg text-white">
+              <h3 className="text-xl font-semibold mb-4">⚽ Controles de Juego</h3>
+              <div className="space-y-2">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-green-100 text-sm">🔄 CAMBIAR JUGADOR</div>
+                  <div className="text-xs text-green-50">Cambio automático al más cercano</div>
+                </div>
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-green-100 text-sm">📹 CÁMARA BALÓN</div>
+                  <div className="text-xs text-green-50">Seguimiento automático</div>
+                </div>
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-green-100 text-sm">🔄 SUSTITUCIÓN</div>
+                  <div className="text-xs text-green-50">Cambio sin menú</div>
+                </div>
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-green-100 text-sm">⏸️ PAUSA</div>
+                  <div className="text-xs text-green-50">Pausar/Reanudar juego</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Área de Trucos Expandida */}
             <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-6 rounded-lg text-white">
-              <h3 className="text-xl font-semibold mb-4">🌟 Área de Trucos</h3>
-              <div className="space-y-3">
-                {Object.entries(trickPatterns).map(([trick, description]) => (
-                  <div key={trick} className="bg-white/20 p-3 rounded-lg">
-                    <div className="font-semibold text-purple-100">{trick}</div>
-                    <div className="text-sm text-purple-50">{description}</div>
+              <h3 className="text-xl font-semibold mb-4">🌟 Área de Trucos (12 Trucos)</h3>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {Object.entries(trickPatterns).map(([trick, data]) => (
+                  <div key={trick} className={`bg-white/20 p-2 rounded-lg ${!data.unlocked ? 'opacity-50' : ''}`}>
+                    <div className="font-semibold text-purple-100 text-sm">
+                      {data.unlocked ? '✅' : '🔒'} {trick}
+                    </div>
+                    <div className="text-xs text-purple-50">
+                      Dificultad: {data.difficulty}/5 - {data.description}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
             
-            {/* Cómo Usar */}
+            {/* Soporte Gamepad */}
             <div className="bg-gradient-to-br from-orange-600 to-orange-700 p-6 rounded-lg text-white">
-              <h3 className="text-xl font-semibold mb-4">❓ Cómo Usar</h3>
-              <div className="space-y-3 text-sm">
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>1.</strong> Usa el joystick para mover al jugador
+              <h3 className="text-xl font-semibold mb-4">🎮 Soporte Gamepad</h3>
+              <div className="space-y-2">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-orange-100 text-sm">
+                    Estado: {gamepadConnected ? '✅ Conectado' : '❌ Desconectado'}
+                  </div>
+                  <div className="text-xs text-orange-50">
+                    Xbox/PlayStation compatible
+                  </div>
                 </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>2.</strong> Presiona botones para acciones básicas
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-orange-100 text-sm">🕹️ Joystick Analógico</div>
+                  <div className="text-xs text-orange-50">Movimiento preciso</div>
                 </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>3.</strong> Dibuja gestos SOLO en el área de trucos
-                </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>4.</strong> ¡Mucho más fácil e intuitivo!
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <div className="font-semibold text-orange-100 text-sm">🔘 Botones Mapeados</div>
+                  <div className="text-xs text-orange-50">A=Pase, B=Disparo, X=Pase Prof, Y=Centro</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Ventajas del Nuevo Sistema */}
+        {/* Características Avanzadas */}
         <div className="mt-8 bg-gradient-to-r from-green-500 to-blue-500 p-6 rounded-lg text-white">
           <h2 className="text-2xl font-bold mb-4 text-center">
-            🚀 ¡Nuevo Sistema de Controles Híbridos!
+            🚀 Sistema Avanzado de Controles
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-3xl mb-2">🎯</div>
-              <div className="font-semibold">Más Preciso</div>
-              <div className="text-sm">Joystick para apuntar exactamente</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl mb-2">⚡</div>
-              <div className="font-semibold">Más Rápido</div>
-              <div className="text-sm">Botones instantáneos para acciones</div>
+              <div className="font-semibold">Personalizable</div>
+              <div className="text-sm">Mueve y ajusta todos los controles</div>
             </div>
             <div className="text-center">
               <div className="text-3xl mb-2">🎮</div>
-              <div className="font-semibold">Más Intuitivo</div>
-              <div className="text-sm">Trucos solo donde corresponde</div>
+              <div className="font-semibold">Gamepad Ready</div>
+              <div className="text-sm">Xbox/PlayStation compatible</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">🌟</div>
+              <div className="font-semibold">12 Trucos</div>
+              <div className="text-sm">Área expandida con más trucos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">📱</div>
+              <div className="font-semibold">2GB Optimizado</div>
+              <div className="text-sm">Perfecto para Tecno Spark 8C</div>
             </div>
           </div>
         </div>
         
-        {/* Nota Importante */}
+        {/* Características Realistas */}
+        <div className="mt-8 bg-gradient-to-r from-purple-500 to-pink-500 p-6 rounded-lg text-white">
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            ⚽ Características Realistas de Fútbol
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-3xl mb-2">🏃</div>
+              <div className="font-semibold">Seguimiento Automático</div>
+              <div className="text-sm">Cambio automático al jugador más cercano</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">🎯</div>
+              <div className="font-semibold">Fuera de Juego</div>
+              <div className="text-sm">Líneas de fuera de juego válidas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">🔄</div>
+              <div className="font-semibold">Sustituciones Rápidas</div>
+              <div className="text-sm">Sin necesidad de menús</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Música y Audio */}
+        <div className="mt-8 bg-gradient-to-r from-yellow-500 to-orange-500 p-6 rounded-lg text-white">
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            🎵 Sistema de Audio Avanzado
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="font-semibold mb-2">🎼 Música Implementada</h3>
+              <ul className="text-sm space-y-1">
+                <li>• 25 pistas libres de copyright</li>
+                <li>• Música dinámica según intensidad</li>
+                <li>• Estilos regionales (Latino, Europeo, Africano)</li>
+                <li>• Música específica para modos de juego</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">🔊 Efectos de Sonido</h3>
+              <ul className="text-sm space-y-1">
+                <li>• Silbatos y reacciones de multitud</li>
+                <li>• Sonidos realistas del balón</li>
+                <li>• Narrador de estadio multiidioma</li>
+                <li>• Efectos de trucos y celebraciones</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        {/* Instrucciones */}
         <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
           <div className="flex items-center">
             <div className="text-green-400 text-2xl mr-4">✅</div>
             <div>
-              <h3 className="text-lg font-semibold text-green-800">¡Perfecto! Sistema Mejorado</h3>
+              <h3 className="text-lg font-semibold text-green-800">¡Sistema Completamente Rediseñado!</h3>
               <p className="text-green-700 mt-2">
-                Este nuevo sistema híbrido combina lo mejor de ambos mundos:
-                <strong> joystick virtual y botones</strong> para acciones básicas,
-                <strong> gestos táctiles</strong> solo para trucos en su área específica.
-                ¡Mucho más fácil de usar y controlar!
+                <strong>Nuevo:</strong> 8 botones de acción organizados, área de trucos expandida (250x150px) 
+                en superior derecha, 12 trucos con detección avanzada, soporte completo para gamepad, 
+                controles personalizables, seguimiento automático, fuera de juego válido, y optimización 
+                completa para dispositivos de 2GB RAM como Tecno Spark 8C.
+              </p>
+              <p className="text-green-700 mt-2">
+                <strong>Características únicas:</strong> Sistema híbrido único que combina la precisión 
+                del joystick con la velocidad de los botones y la creatividad de los gestos táctiles.
               </p>
             </div>
           </div>
