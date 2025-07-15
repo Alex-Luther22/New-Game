@@ -2,83 +2,70 @@ import React, { useState, useRef, useEffect } from 'react';
 
 const TouchControlsDemo = () => {
   const canvasRef = useRef(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentGesture, setCurrentGesture] = useState([]);
-  const [detectedTrick, setDetectedTrick] = useState('');
   const [ballPosition, setBallPosition] = useState({ x: 300, y: 300 });
-  const [gestureTrail, setGestureTrail] = useState([]);
-  const [actionType, setActionType] = useState('');
-  const [kickPower, setKickPower] = useState(0);
-  const [isCharging, setIsCharging] = useState(false);
-  const [chargeStartTime, setChargeStartTime] = useState(0);
-  const [touchStartPos, setTouchStartPos] = useState({ x: 0, y: 0 });
-  const [touchEndPos, setTouchEndPos] = useState({ x: 0, y: 0 });
-  const [showTrajectory, setShowTrajectory] = useState(false);
-  const [trajectoryPoints, setTrajectoryPoints] = useState([]);
+  const [joystickPosition, setJoystickPosition] = useState({ x: 0, y: 0 });
+  const [isJoystickActive, setIsJoystickActive] = useState(false);
+  const [activeButton, setActiveButton] = useState('');
+  const [trickGesture, setTrickGesture] = useState([]);
+  const [detectedTrick, setDetectedTrick] = useState('');
+  const [isTrickAreaActive, setIsTrickAreaActive] = useState(false);
+  const [playerPosition, setPlayerPosition] = useState({ x: 250, y: 300 });
+  const [isMoving, setIsMoving] = useState(false);
 
-  // Configuración de trucos
-  const trickPatterns = {
-    'Roulette': 'Dibuja un círculo completo',
-    'Elastico': 'Dibuja una L (derecha, luego abajo)',
-    'Step-over': 'Dibuja un zigzag',
-    'Nutmeg': 'Dibuja una línea vertical rápida',
-    'Rainbow Flick': 'Dibuja un arco hacia arriba',
-    'Rabona': 'Dibuja una curva externa',
-    'Heel Flick': 'Dibuja hacia atrás',
-    'Scorpion': 'Dibuja una S compleja'
+  // Configuración de controles
+  const joystickArea = { x: 50, y: 250, radius: 75 };
+  const trickArea = { x: 200, y: 50, width: 200, height: 100 };
+  const buttons = {
+    pass: { x: 450, y: 300, radius: 35, label: 'PASE' },
+    shoot: { x: 520, y: 230, radius: 35, label: 'DISPARO' },
+    sprint: { x: 380, y: 230, radius: 30, label: 'SPRINT' },
+    tackle: { x: 520, y: 370, radius: 30, label: 'TACKLE' }
   };
 
-  const controlInstructions = {
-    'Tap Simple': 'Toca una vez = Pase corto',
-    'Doble Tap': 'Toca dos veces rápido = Disparo rápido',
-    'Swipe Rápido': 'Desliza rápido = Disparo potente',
-    'Swipe Lento': 'Desliza lento = Pase largo',
-    'Mantener': 'Mantén presionado = Cargar patada',
-    'Arrastrar': 'Arrastra = Mover jugador'
+  const trickPatterns = {
+    'Roulette': 'Dibuja un círculo en el área de trucos',
+    'Elastico': 'Dibuja una L en el área de trucos',
+    'Step-over': 'Dibuja un zigzag en el área de trucos',
+    'Nutmeg': 'Dibuja una línea vertical en el área de trucos'
   };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
-    // Configurar canvas
     canvas.width = 600;
     canvas.height = 400;
     
     // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Dibujar campo de fútbol
+    // Dibujar campo
     drawField(ctx);
+    
+    // Dibujar jugador
+    drawPlayer(ctx, playerPosition.x, playerPosition.y);
     
     // Dibujar balón
     drawBall(ctx, ballPosition.x, ballPosition.y);
     
-    // Dibujar trail del gesto
-    if (gestureTrail.length > 1) {
-      drawGestureTrail(ctx, gestureTrail);
+    // Dibujar controles
+    drawControls(ctx);
+    
+    // Dibujar gesto de truco
+    if (trickGesture.length > 1) {
+      drawTrickGesture(ctx, trickGesture);
     }
     
-    // Dibujar trayectoria predicha
-    if (showTrajectory && trajectoryPoints.length > 1) {
-      drawTrajectory(ctx, trajectoryPoints);
-    }
-    
-    // Dibujar indicadores
-    drawIndicators(ctx);
-    
-  }, [ballPosition, gestureTrail, trajectoryPoints, showTrajectory, kickPower, isCharging]);
+  }, [ballPosition, playerPosition, joystickPosition, isJoystickActive, activeButton, trickGesture, isTrickAreaActive]);
 
   const drawField = (ctx) => {
     // Fondo verde
-    ctx.fillStyle = '#4CAF50';
+    ctx.fillStyle = '#2E7D32';
     ctx.fillRect(0, 0, 600, 400);
     
     // Líneas del campo
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 2;
-    
-    // Línea central
     ctx.beginPath();
     ctx.moveTo(300, 0);
     ctx.lineTo(300, 400);
@@ -86,54 +73,131 @@ const TouchControlsDemo = () => {
     
     // Círculo central
     ctx.beginPath();
-    ctx.arc(300, 200, 50, 0, 2 * Math.PI);
+    ctx.arc(300, 200, 40, 0, 2 * Math.PI);
     ctx.stroke();
     
     // Áreas
-    ctx.strokeRect(50, 100, 100, 200); // Área izquierda
-    ctx.strokeRect(450, 100, 100, 200); // Área derecha
+    ctx.strokeRect(30, 120, 80, 160);
+    ctx.strokeRect(490, 120, 80, 160);
     
     // Porterías
-    ctx.strokeRect(0, 150, 50, 100); // Portería izquierda
-    ctx.strokeRect(550, 150, 50, 100); // Portería derecha
+    ctx.strokeRect(0, 170, 30, 60);
+    ctx.strokeRect(570, 170, 30, 60);
+  };
+
+  const drawPlayer = (ctx, x, y) => {
+    // Sombra del jugador
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x + 1, y + 1, 12, 8, 0, 0, 2 * Math.PI);
+    ctx.fill();
     
-    // Punto de penalti
+    // Jugador
+    ctx.fillStyle = isMoving ? '#1565C0' : '#1976D2';
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Número del jugador
     ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(120, 200, 3, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.arc(480, 200, 3, 0, 2 * Math.PI);
-    ctx.fill();
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('10', x, y + 4);
   };
 
   const drawBall = (ctx, x, y) => {
     // Sombra del balón
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.beginPath();
-    ctx.ellipse(x + 2, y + 2, 12, 8, 0, 0, 2 * Math.PI);
+    ctx.ellipse(x + 1, y + 1, 8, 6, 0, 0, 2 * Math.PI);
     ctx.fill();
     
     // Balón
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.arc(x, y, 10, 0, 2 * Math.PI);
+    ctx.arc(x, y, 6, 0, 2 * Math.PI);
     ctx.fill();
     
     // Líneas del balón
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(x - 7, y - 7);
-    ctx.lineTo(x + 7, y + 7);
-    ctx.moveTo(x - 7, y + 7);
-    ctx.lineTo(x + 7, y - 7);
+    ctx.moveTo(x - 4, y - 4);
+    ctx.lineTo(x + 4, y + 4);
+    ctx.moveTo(x - 4, y + 4);
+    ctx.lineTo(x + 4, y - 4);
     ctx.stroke();
   };
 
-  const drawGestureTrail = (ctx, trail) => {
-    if (trail.length < 2) return;
+  const drawControls = (ctx) => {
+    // Área de joystick
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.beginPath();
+    ctx.arc(joystickArea.x, joystickArea.y, joystickArea.radius, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Joystick background
+    ctx.fillStyle = isJoystickActive ? 'rgba(0, 150, 255, 0.3)' : 'rgba(255, 255, 255, 0.2)';
+    ctx.beginPath();
+    ctx.arc(joystickArea.x, joystickArea.y, 40, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Joystick handle
+    const handleX = joystickArea.x + joystickPosition.x * 30;
+    const handleY = joystickArea.y + joystickPosition.y * 30;
+    ctx.fillStyle = isJoystickActive ? '#00BCD4' : '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(handleX, handleY, 15, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // Botones de acción
+    Object.entries(buttons).forEach(([key, button]) => {
+      const isActive = activeButton === key;
+      
+      // Botón
+      ctx.fillStyle = isActive ? '#4CAF50' : 'rgba(255, 255, 255, 0.3)';
+      ctx.beginPath();
+      ctx.arc(button.x, button.y, button.radius, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Borde
+      ctx.strokeStyle = isActive ? '#2E7D32' : '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Texto
+      ctx.fillStyle = isActive ? '#FFFFFF' : '#000000';
+      ctx.font = '10px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(button.label, button.x, button.y + 3);
+    });
+    
+    // Área de trucos
+    ctx.fillStyle = isTrickAreaActive ? 'rgba(255, 255, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)';
+    ctx.fillRect(trickArea.x, trickArea.y, trickArea.width, trickArea.height);
+    
+    // Borde del área de trucos
+    ctx.strokeStyle = isTrickAreaActive ? '#FFD700' : '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(trickArea.x, trickArea.y, trickArea.width, trickArea.height);
+    
+    // Texto del área de trucos
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('ÁREA DE TRUCOS', trickArea.x + trickArea.width / 2, trickArea.y + 20);
+    ctx.fillText('Dibuja gestos aquí', trickArea.x + trickArea.width / 2, trickArea.y + 35);
+    
+    // Labels de controles
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('JOYSTICK', joystickArea.x, joystickArea.y + 60);
+    ctx.fillText('MOVER/APUNTAR', joystickArea.x, joystickArea.y + 75);
+  };
+
+  const drawTrickGesture = (ctx, gesture) => {
+    if (gesture.length < 2) return;
     
     ctx.strokeStyle = '#FFD700';
     ctx.lineWidth = 3;
@@ -141,232 +205,206 @@ const TouchControlsDemo = () => {
     ctx.lineJoin = 'round';
     
     ctx.beginPath();
-    ctx.moveTo(trail[0].x, trail[0].y);
+    ctx.moveTo(gesture[0].x, gesture[0].y);
     
-    for (let i = 1; i < trail.length; i++) {
-      const alpha = i / trail.length;
-      ctx.globalAlpha = alpha;
-      ctx.lineTo(trail[i].x, trail[i].y);
+    for (let i = 1; i < gesture.length; i++) {
+      ctx.lineTo(gesture[i].x, gesture[i].y);
     }
     
     ctx.stroke();
-    ctx.globalAlpha = 1.0;
   };
 
-  const drawTrajectory = (ctx, points) => {
-    if (points.length < 2) return;
-    
-    ctx.strokeStyle = '#FF4444';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-    
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    
-    for (let i = 1; i < points.length; i++) {
-      ctx.lineTo(points[i].x, points[i].y);
-    }
-    
-    ctx.stroke();
-    ctx.setLineDash([]);
-  };
-
-  const drawIndicators = (ctx) => {
-    // Indicador de carga de patada
-    if (isCharging) {
-      const chargeLevel = Math.min(kickPower / 100, 1);
-      
-      // Barra de carga
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(ballPosition.x - 25, ballPosition.y - 40, 50, 8);
-      
-      // Nivel de carga
-      ctx.fillStyle = `hsl(${120 * (1 - chargeLevel)}, 100%, 50%)`;
-      ctx.fillRect(ballPosition.x - 25, ballPosition.y - 40, 50 * chargeLevel, 8);
-      
-      // Círculo de potencia
-      ctx.strokeStyle = `hsl(${120 * (1 - chargeLevel)}, 100%, 50%)`;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(ballPosition.x, ballPosition.y, 20 + chargeLevel * 10, 0, 2 * Math.PI);
-      ctx.stroke();
-    }
-    
-    // Indicador de dirección
-    if (touchStartPos.x && touchEndPos.x) {
-      ctx.strokeStyle = '#FFD700';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(touchStartPos.x, touchStartPos.y);
-      ctx.lineTo(touchEndPos.x, touchEndPos.y);
-      ctx.stroke();
-      
-      // Flecha
-      const angle = Math.atan2(touchEndPos.y - touchStartPos.y, touchEndPos.x - touchStartPos.x);
-      const arrowLength = 15;
-      ctx.beginPath();
-      ctx.moveTo(touchEndPos.x, touchEndPos.y);
-      ctx.lineTo(
-        touchEndPos.x - arrowLength * Math.cos(angle - Math.PI / 6),
-        touchEndPos.y - arrowLength * Math.sin(angle - Math.PI / 6)
-      );
-      ctx.moveTo(touchEndPos.x, touchEndPos.y);
-      ctx.lineTo(
-        touchEndPos.x - arrowLength * Math.cos(angle + Math.PI / 6),
-        touchEndPos.y - arrowLength * Math.sin(angle + Math.PI / 6)
-      );
-      ctx.stroke();
-    }
-  };
-
-  const handleTouchStart = (e) => {
+  const handleMouseDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    setIsDrawing(true);
-    setCurrentGesture([{ x, y, time: Date.now() }]);
-    setGestureTrail([{ x, y }]);
-    setTouchStartPos({ x, y });
-    setTouchEndPos({ x, y });
-    setIsCharging(true);
-    setChargeStartTime(Date.now());
-    setKickPower(0);
-    setDetectedTrick('');
-    setActionType('');
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDrawing) return;
+    // Verificar joystick
+    const joystickDistance = Math.sqrt(
+      Math.pow(x - joystickArea.x, 2) + Math.pow(y - joystickArea.y, 2)
+    );
     
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    setCurrentGesture(prev => [...prev, { x, y, time: Date.now() }]);
-    setGestureTrail(prev => [...prev, { x, y }]);
-    setTouchEndPos({ x, y });
-    
-    // Actualizar potencia de carga
-    if (isCharging) {
-      const chargeTime = Date.now() - chargeStartTime;
-      const power = Math.min((chargeTime / 1000) * 100, 100);
-      setKickPower(power);
+    if (joystickDistance <= joystickArea.radius) {
+      setIsJoystickActive(true);
+      updateJoystick(x, y);
+      return;
     }
     
-    // Calcular trayectoria predicha
-    const direction = {
-      x: x - touchStartPos.x,
-      y: y - touchStartPos.y
-    };
-    
-    if (Math.abs(direction.x) > 5 || Math.abs(direction.y) > 5) {
-      const trajectory = calculateTrajectory(ballPosition, direction, kickPower);
-      setTrajectoryPoints(trajectory);
-      setShowTrajectory(true);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDrawing) return;
-    
-    setIsDrawing(false);
-    setIsCharging(false);
-    
-    // Analizar el gesto
-    const gestureResult = analyzeGesture(currentGesture);
-    setDetectedTrick(gestureResult.trick);
-    setActionType(gestureResult.action);
-    
-    // Ejecutar acción
-    executeAction(gestureResult, touchStartPos, touchEndPos);
-    
-    // Limpiar después de 2 segundos
-    setTimeout(() => {
-      setGestureTrail([]);
-      setShowTrajectory(false);
-      setTouchStartPos({ x: 0, y: 0 });
-      setTouchEndPos({ x: 0, y: 0 });
-    }, 2000);
-  };
-
-  const analyzeGesture = (gesture) => {
-    if (gesture.length < 2) {
-      return { trick: 'Tap Simple', action: 'Pase corto' };
-    }
-    
-    const distance = calculateDistance(gesture[0], gesture[gesture.length - 1]);
-    const duration = gesture[gesture.length - 1].time - gesture[0].time;
-    
-    // Detectar doble tap
-    if (distance < 20 && duration < 200) {
-      return { trick: 'Doble Tap', action: 'Disparo rápido' };
-    }
-    
-    // Detectar swipe
-    if (distance > 50) {
-      if (duration < 300) {
-        return { trick: 'Swipe Rápido', action: 'Disparo potente' };
-      } else {
-        return { trick: 'Swipe Lento', action: 'Pase largo' };
+    // Verificar botones
+    for (const [key, button] of Object.entries(buttons)) {
+      const buttonDistance = Math.sqrt(
+        Math.pow(x - button.x, 2) + Math.pow(y - button.y, 2)
+      );
+      
+      if (buttonDistance <= button.radius) {
+        setActiveButton(key);
+        executeAction(key);
+        return;
       }
     }
     
-    // Detectar trucos específicos
-    const trickDetected = detectTrick(gesture);
-    if (trickDetected) {
-      return { trick: trickDetected, action: 'Truco' };
+    // Verificar área de trucos
+    if (x >= trickArea.x && x <= trickArea.x + trickArea.width &&
+        y >= trickArea.y && y <= trickArea.y + trickArea.height) {
+      setIsTrickAreaActive(true);
+      setTrickGesture([{ x, y }]);
+      return;
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    if (isJoystickActive) {
+      updateJoystick(x, y);
     }
     
-    // Detectar carga
-    if (duration > 500) {
-      return { trick: 'Carga de Patada', action: 'Disparo cargado' };
+    if (isTrickAreaActive) {
+      setTrickGesture(prev => [...prev, { x, y }]);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isJoystickActive) {
+      setIsJoystickActive(false);
+      setJoystickPosition({ x: 0, y: 0 });
+      setIsMoving(false);
     }
     
-    return { trick: 'Movimiento', action: 'Mover jugador' };
+    if (activeButton) {
+      setActiveButton('');
+    }
+    
+    if (isTrickAreaActive) {
+      setIsTrickAreaActive(false);
+      if (trickGesture.length > 5) {
+        const trick = detectTrick(trickGesture);
+        setDetectedTrick(trick);
+        if (trick !== 'Ninguno') {
+          executeTrick(trick);
+        }
+      }
+      setTimeout(() => {
+        setTrickGesture([]);
+        setDetectedTrick('');
+      }, 2000);
+    }
+  };
+
+  const updateJoystick = (x, y) => {
+    const deltaX = x - joystickArea.x;
+    const deltaY = y - joystickArea.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    if (distance > 30) {
+      const normalizedX = deltaX / distance;
+      const normalizedY = deltaY / distance;
+      setJoystickPosition({ x: normalizedX, y: normalizedY });
+    } else {
+      setJoystickPosition({ x: deltaX / 30, y: deltaY / 30 });
+    }
+    
+    // Mover jugador
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      setIsMoving(true);
+      const newPlayerPos = {
+        x: Math.max(20, Math.min(580, playerPosition.x + deltaX * 0.1)),
+        y: Math.max(20, Math.min(380, playerPosition.y + deltaY * 0.1))
+      };
+      setPlayerPosition(newPlayerPos);
+    }
+  };
+
+  const executeAction = (action) => {
+    switch (action) {
+      case 'pass':
+        executePass();
+        break;
+      case 'shoot':
+        executeShoot();
+        break;
+      case 'sprint':
+        executeSprint();
+        break;
+      case 'tackle':
+        executeTackle();
+        break;
+    }
+  };
+
+  const executePass = () => {
+    const direction = joystickPosition.x > 0 ? 1 : -1;
+    const newBallPos = {
+      x: Math.max(20, Math.min(580, ballPosition.x + direction * 50)),
+      y: ballPosition.y
+    };
+    
+    animateBall(newBallPos);
+  };
+
+  const executeShoot = () => {
+    const direction = joystickPosition.x > 0 ? 1 : -1;
+    const newBallPos = {
+      x: Math.max(20, Math.min(580, ballPosition.x + direction * 100)),
+      y: Math.max(20, Math.min(380, ballPosition.y + joystickPosition.y * 30))
+    };
+    
+    animateBall(newBallPos);
+  };
+
+  const executeSprint = () => {
+    setIsMoving(true);
+    setTimeout(() => setIsMoving(false), 1000);
+  };
+
+  const executeTackle = () => {
+    // Animación de tackle
+    const originalPos = { ...playerPosition };
+    setPlayerPosition({ x: originalPos.x + 20, y: originalPos.y });
+    setTimeout(() => setPlayerPosition(originalPos), 300);
+  };
+
+  const animateBall = (targetPos) => {
+    const startPos = { ...ballPosition };
+    const steps = 20;
+    let currentStep = 0;
+    
+    const animate = () => {
+      if (currentStep < steps) {
+        const progress = currentStep / steps;
+        setBallPosition({
+          x: startPos.x + (targetPos.x - startPos.x) * progress,
+          y: startPos.y + (targetPos.y - startPos.y) * progress
+        });
+        currentStep++;
+        setTimeout(animate, 50);
+      }
+    };
+    
+    animate();
   };
 
   const detectTrick = (gesture) => {
-    if (gesture.length < 8) return null;
+    if (gesture.length < 5) return 'Ninguno';
     
-    // Detectar círculo (Roulette)
-    if (isCircularGesture(gesture)) {
-      return 'Roulette';
-    }
+    if (isCircularGesture(gesture)) return 'Roulette';
+    if (isLShapeGesture(gesture)) return 'Elastico';
+    if (isZigzagGesture(gesture)) return 'Step-over';
+    if (isVerticalLineGesture(gesture)) return 'Nutmeg';
     
-    // Detectar L (Elastico)
-    if (isLShapeGesture(gesture)) {
-      return 'Elastico';
-    }
-    
-    // Detectar zigzag (Step-over)
-    if (isZigzagGesture(gesture)) {
-      return 'Step-over';
-    }
-    
-    // Detectar línea vertical (Nutmeg)
-    if (isVerticalLineGesture(gesture)) {
-      return 'Nutmeg';
-    }
-    
-    // Detectar arco (Rainbow Flick)
-    if (isArcGesture(gesture)) {
-      return 'Rainbow Flick';
-    }
-    
-    return null;
+    return 'Ninguno';
   };
 
   const isCircularGesture = (gesture) => {
-    if (gesture.length < 8) return false;
-    
     const center = calculateCenter(gesture);
-    const radius = calculateAverageRadius(gesture, center);
-    
+    const avgRadius = calculateAverageRadius(gesture, center);
     let circularPoints = 0;
+    
     for (let point of gesture) {
-      const distance = calculateDistance(point, center);
-      if (Math.abs(distance - radius) < radius * 0.3) {
+      const distance = Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2));
+      if (Math.abs(distance - avgRadius) < avgRadius * 0.3) {
         circularPoints++;
       }
     }
@@ -376,7 +414,6 @@ const TouchControlsDemo = () => {
 
   const isLShapeGesture = (gesture) => {
     if (gesture.length < 6) return false;
-    
     const midPoint = Math.floor(gesture.length / 2);
     const firstHalf = gesture.slice(0, midPoint);
     const secondHalf = gesture.slice(midPoint);
@@ -385,87 +422,39 @@ const TouchControlsDemo = () => {
   };
 
   const isZigzagGesture = (gesture) => {
-    if (gesture.length < 6) return false;
-    
     let directionChanges = 0;
-    let lastDirection = { x: 0, y: 0 };
-    
-    for (let i = 1; i < gesture.length; i++) {
-      const currentDirection = {
-        x: gesture[i].x - gesture[i-1].x,
-        y: gesture[i].y - gesture[i-1].y
-      };
-      
-      if (lastDirection.x !== 0 || lastDirection.y !== 0) {
-        const angle = Math.atan2(currentDirection.y, currentDirection.x) - 
-                     Math.atan2(lastDirection.y, lastDirection.x);
-        
-        if (Math.abs(angle) > Math.PI / 4) {
-          directionChanges++;
-        }
+    for (let i = 2; i < gesture.length; i++) {
+      const angle1 = Math.atan2(gesture[i-1].y - gesture[i-2].y, gesture[i-1].x - gesture[i-2].x);
+      const angle2 = Math.atan2(gesture[i].y - gesture[i-1].y, gesture[i].x - gesture[i-1].x);
+      if (Math.abs(angle1 - angle2) > Math.PI / 3) {
+        directionChanges++;
       }
-      
-      lastDirection = currentDirection;
     }
-    
     return directionChanges >= 2;
   };
 
   const isVerticalLineGesture = (gesture) => {
-    if (gesture.length < 3) return false;
-    
     const start = gesture[0];
     const end = gesture[gesture.length - 1];
-    
-    const horizontalDistance = Math.abs(end.x - start.x);
-    const verticalDistance = Math.abs(end.y - start.y);
-    
-    return verticalDistance > horizontalDistance * 2;
-  };
-
-  const isArcGesture = (gesture) => {
-    if (gesture.length < 5) return false;
-    
-    const start = gesture[0];
-    const end = gesture[gesture.length - 1];
-    const middle = gesture[Math.floor(gesture.length / 2)];
-    
-    const midLine = {
-      x: (start.x + end.x) / 2,
-      y: (start.y + end.y) / 2
-    };
-    
-    return middle.y < midLine.y - 10; // Punto medio está por encima
+    const horizontal = Math.abs(end.x - start.x);
+    const vertical = Math.abs(end.y - start.y);
+    return vertical > horizontal * 2;
   };
 
   const isHorizontalGesture = (gesture) => {
-    if (gesture.length < 2) return false;
-    
     const start = gesture[0];
     const end = gesture[gesture.length - 1];
-    
-    const horizontalDistance = Math.abs(end.x - start.x);
-    const verticalDistance = Math.abs(end.y - start.y);
-    
-    return horizontalDistance > verticalDistance * 1.5;
+    const horizontal = Math.abs(end.x - start.x);
+    const vertical = Math.abs(end.y - start.y);
+    return horizontal > vertical * 1.5;
   };
 
   const isVerticalGesture = (gesture) => {
-    if (gesture.length < 2) return false;
-    
     const start = gesture[0];
     const end = gesture[gesture.length - 1];
-    
-    const horizontalDistance = Math.abs(end.x - start.x);
-    const verticalDistance = Math.abs(end.y - start.y);
-    
-    return verticalDistance > horizontalDistance * 1.5;
-  };
-
-  const calculateDistance = (point1, point2) => {
-    const dx = point1.x - point2.x;
-    const dy = point1.y - point2.y;
-    return Math.sqrt(dx * dx + dy * dy);
+    const horizontal = Math.abs(end.x - start.x);
+    const vertical = Math.abs(end.y - start.y);
+    return vertical > horizontal * 1.5;
   };
 
   const calculateCenter = (points) => {
@@ -473,108 +462,83 @@ const TouchControlsDemo = () => {
       x: acc.x + point.x,
       y: acc.y + point.y
     }), { x: 0, y: 0 });
-    
-    return {
-      x: sum.x / points.length,
-      y: sum.y / points.length
-    };
+    return { x: sum.x / points.length, y: sum.y / points.length };
   };
 
   const calculateAverageRadius = (points, center) => {
-    const totalRadius = points.reduce((acc, point) => 
-      acc + calculateDistance(point, center), 0);
+    const totalRadius = points.reduce((acc, point) => {
+      return acc + Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2));
+    }, 0);
     return totalRadius / points.length;
   };
 
-  const calculateTrajectory = (ballPos, direction, power) => {
-    const points = [];
-    const normalizedDirection = {
-      x: direction.x / Math.sqrt(direction.x * direction.x + direction.y * direction.y),
-      y: direction.y / Math.sqrt(direction.x * direction.x + direction.y * direction.y)
-    };
+  const executeTrick = (trick) => {
+    // Animación del truco
+    const originalPos = { ...playerPosition };
+    let animationSteps = [];
     
-    const velocity = {
-      x: normalizedDirection.x * power * 0.1,
-      y: normalizedDirection.y * power * 0.1
-    };
-    
-    let currentPos = { x: ballPos.x, y: ballPos.y };
-    
-    for (let i = 0; i < 20; i++) {
-      points.push({ x: currentPos.x, y: currentPos.y });
-      
-      currentPos.x += velocity.x;
-      currentPos.y += velocity.y;
-      
-      // Aplicar resistencia
-      velocity.x *= 0.95;
-      velocity.y *= 0.95;
-      
-      // Verificar límites
-      if (currentPos.x < 0 || currentPos.x > 600 || 
-          currentPos.y < 0 || currentPos.y > 400) {
+    switch (trick) {
+      case 'Roulette':
+        animationSteps = [
+          { x: originalPos.x + 5, y: originalPos.y },
+          { x: originalPos.x, y: originalPos.y - 5 },
+          { x: originalPos.x - 5, y: originalPos.y },
+          { x: originalPos.x, y: originalPos.y + 5 },
+          originalPos
+        ];
         break;
-      }
+      case 'Elastico':
+        animationSteps = [
+          { x: originalPos.x + 10, y: originalPos.y },
+          { x: originalPos.x, y: originalPos.y - 10 },
+          originalPos
+        ];
+        break;
+      case 'Step-over':
+        animationSteps = [
+          { x: originalPos.x + 8, y: originalPos.y },
+          { x: originalPos.x - 8, y: originalPos.y },
+          originalPos
+        ];
+        break;
+      case 'Nutmeg':
+        animationSteps = [
+          { x: originalPos.x, y: originalPos.y + 15 },
+          originalPos
+        ];
+        break;
     }
     
-    return points;
-  };
-
-  const executeAction = (result, startPos, endPos) => {
-    const direction = {
-      x: endPos.x - startPos.x,
-      y: endPos.y - startPos.y
+    // Ejecutar animación
+    let stepIndex = 0;
+    const animateStep = () => {
+      if (stepIndex < animationSteps.length) {
+        setPlayerPosition(animationSteps[stepIndex]);
+        stepIndex++;
+        setTimeout(animateStep, 150);
+      }
     };
     
-    const distance = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
-    
-    if (distance > 10) {
-      // Mover el balón
-      const newBallPos = {
-        x: Math.max(20, Math.min(580, ballPosition.x + direction.x * 0.3)),
-        y: Math.max(20, Math.min(380, ballPosition.y + direction.y * 0.3))
-      };
-      
-      // Animación del movimiento
-      const steps = 10;
-      let currentStep = 0;
-      
-      const animate = () => {
-        if (currentStep < steps) {
-          const progress = currentStep / steps;
-          setBallPosition({
-            x: ballPosition.x + (newBallPos.x - ballPosition.x) * progress,
-            y: ballPosition.y + (newBallPos.y - ballPosition.y) * progress
-          });
-          currentStep++;
-          setTimeout(animate, 50);
-        } else {
-          setBallPosition(newBallPos);
-        }
-      };
-      
-      animate();
-    }
+    animateStep();
   };
 
   const resetDemo = () => {
     setBallPosition({ x: 300, y: 300 });
-    setGestureTrail([]);
+    setPlayerPosition({ x: 250, y: 300 });
+    setJoystickPosition({ x: 0, y: 0 });
+    setIsJoystickActive(false);
+    setActiveButton('');
+    setTrickGesture([]);
     setDetectedTrick('');
-    setActionType('');
-    setShowTrajectory(false);
-    setTrajectoryPoints([]);
-    setTouchStartPos({ x: 0, y: 0 });
-    setTouchEndPos({ x: 0, y: 0 });
-    setKickPower(0);
-    setIsCharging(false);
+    setIsTrickAreaActive(false);
+    setIsMoving(false);
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
       <div className="bg-white rounded-xl shadow-2xl p-8">
         <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">
-          ⚽ Football Master - Controles Táctiles
+          ⚽ Football Master - Controles Híbridos
         </h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -582,18 +546,18 @@ const TouchControlsDemo = () => {
           <div className="lg:col-span-2">
             <div className="bg-gradient-to-br from-green-600 to-green-700 p-4 rounded-lg">
               <h2 className="text-xl font-semibold text-white mb-4 text-center">
-                🎮 Área de Pruebas Interactiva
+                🎮 Demo Interactiva - Controles Híbridos
               </h2>
               
               <div className="bg-white p-4 rounded-lg">
                 <canvas
                   ref={canvasRef}
-                  onMouseDown={handleTouchStart}
-                  onMouseMove={handleTouchMove}
-                  onMouseUp={handleTouchEnd}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onTouchStart={handleMouseDown}
+                  onTouchMove={handleMouseMove}
+                  onTouchEnd={handleMouseUp}
                   className="border-2 border-green-800 rounded-lg cursor-crosshair w-full"
                   style={{ maxWidth: '600px', height: '400px' }}
                 />
@@ -612,50 +576,67 @@ const TouchControlsDemo = () => {
             {/* Información en tiempo real */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-blue-100 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-800 mb-2">🎯 Acción Detectada</h3>
+                <h3 className="font-semibold text-blue-800 mb-2">🎯 Estado Actual</h3>
                 <p className="text-blue-700">
-                  <strong>Gesto:</strong> {detectedTrick || 'Ninguno'}
+                  <strong>Jugador:</strong> {isMoving ? 'Moviéndose' : 'Parado'}
                 </p>
                 <p className="text-blue-700">
-                  <strong>Acción:</strong> {actionType || 'Ninguna'}
+                  <strong>Joystick:</strong> {isJoystickActive ? 'Activo' : 'Inactivo'}
+                </p>
+                <p className="text-blue-700">
+                  <strong>Botón:</strong> {activeButton || 'Ninguno'}
                 </p>
               </div>
               
               <div className="bg-green-100 p-4 rounded-lg">
-                <h3 className="font-semibold text-green-800 mb-2">⚡ Estado del Balón</h3>
+                <h3 className="font-semibold text-green-800 mb-2">🌟 Truco Detectado</h3>
                 <p className="text-green-700">
-                  <strong>Posición:</strong> ({Math.round(ballPosition.x)}, {Math.round(ballPosition.y)})
+                  <strong>Último truco:</strong> {detectedTrick || 'Ninguno'}
                 </p>
                 <p className="text-green-700">
-                  <strong>Potencia:</strong> {Math.round(kickPower)}%
+                  <strong>Área de trucos:</strong> {isTrickAreaActive ? 'Activa' : 'Inactiva'}
                 </p>
               </div>
             </div>
           </div>
           
-          {/* Panel de Instrucciones */}
+          {/* Panel de Controles */}
           <div className="space-y-6">
             {/* Controles Básicos */}
             <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-lg text-white">
               <h3 className="text-xl font-semibold mb-4">🎮 Controles Básicos</h3>
               <div className="space-y-3">
-                {Object.entries(controlInstructions).map(([control, description]) => (
-                  <div key={control} className="bg-white/20 p-3 rounded-lg">
-                    <div className="font-semibold text-blue-100">{control}</div>
-                    <div className="text-sm text-blue-50">{description}</div>
-                  </div>
-                ))}
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <div className="font-semibold text-blue-100">🕹️ Joystick Virtual</div>
+                  <div className="text-sm text-blue-50">Mover jugador y apuntar</div>
+                </div>
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <div className="font-semibold text-blue-100">🔘 Botón PASE</div>
+                  <div className="text-sm text-blue-50">Pasar balón a compañero</div>
+                </div>
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <div className="font-semibold text-blue-100">🔘 Botón DISPARO</div>
+                  <div className="text-sm text-blue-50">Disparar a portería</div>
+                </div>
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <div className="font-semibold text-blue-100">🔘 Botón SPRINT</div>
+                  <div className="text-sm text-blue-50">Correr más rápido</div>
+                </div>
+                <div className="bg-white/20 p-3 rounded-lg">
+                  <div className="font-semibold text-blue-100">🔘 Botón TACKLE</div>
+                  <div className="text-sm text-blue-50">Entrada/Robar balón</div>
+                </div>
               </div>
             </div>
             
-            {/* Trucos Disponibles */}
+            {/* Área de Trucos */}
             <div className="bg-gradient-to-br from-purple-600 to-purple-700 p-6 rounded-lg text-white">
-              <h3 className="text-xl font-semibold mb-4">🌟 Trucos Disponibles</h3>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {Object.entries(trickPatterns).map(([trick, pattern]) => (
+              <h3 className="text-xl font-semibold mb-4">🌟 Área de Trucos</h3>
+              <div className="space-y-3">
+                {Object.entries(trickPatterns).map(([trick, description]) => (
                   <div key={trick} className="bg-white/20 p-3 rounded-lg">
                     <div className="font-semibold text-purple-100">{trick}</div>
-                    <div className="text-sm text-purple-50">{pattern}</div>
+                    <div className="text-sm text-purple-50">{description}</div>
                   </div>
                 ))}
               </div>
@@ -666,56 +647,57 @@ const TouchControlsDemo = () => {
               <h3 className="text-xl font-semibold mb-4">❓ Cómo Usar</h3>
               <div className="space-y-3 text-sm">
                 <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>1.</strong> Usa el mouse o touch para dibujar gestos en el campo
+                  <strong>1.</strong> Usa el joystick para mover al jugador
                 </div>
                 <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>2.</strong> Observa cómo el sistema detecta tus movimientos
+                  <strong>2.</strong> Presiona botones para acciones básicas
                 </div>
                 <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>3.</strong> Practica los trucos hasta dominarlos
+                  <strong>3.</strong> Dibuja gestos SOLO en el área de trucos
                 </div>
                 <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>4.</strong> La línea dorada muestra tu gesto
-                </div>
-                <div className="bg-white/20 p-3 rounded-lg">
-                  <strong>5.</strong> La línea roja punteada muestra la trayectoria
+                  <strong>4.</strong> ¡Mucho más fácil e intuitivo!
                 </div>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Estadísticas y Características */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-lg text-white text-center">
-            <div className="text-3xl font-bold">⚽</div>
-            <div className="text-2xl font-semibold">Física Realista</div>
-            <div className="text-sm mt-2">Curvas, efectos Magnus, rebotes auténticos</div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-lg text-white text-center">
-            <div className="text-3xl font-bold">🎮</div>
-            <div className="text-2xl font-semibold">8 Trucos</div>
-            <div className="text-sm mt-2">Roulette, Elastico, Step-over y más</div>
-          </div>
-          
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-lg text-white text-center">
-            <div className="text-3xl font-bold">📱</div>
-            <div className="text-2xl font-semibold">Optimizado</div>
-            <div className="text-sm mt-2">Funciona en Tecno Spark 8C y superiores</div>
+        {/* Ventajas del Nuevo Sistema */}
+        <div className="mt-8 bg-gradient-to-r from-green-500 to-blue-500 p-6 rounded-lg text-white">
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            🚀 ¡Nuevo Sistema de Controles Híbridos!
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-3xl mb-2">🎯</div>
+              <div className="font-semibold">Más Preciso</div>
+              <div className="text-sm">Joystick para apuntar exactamente</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">⚡</div>
+              <div className="font-semibold">Más Rápido</div>
+              <div className="text-sm">Botones instantáneos para acciones</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl mb-2">🎮</div>
+              <div className="font-semibold">Más Intuitivo</div>
+              <div className="text-sm">Trucos solo donde corresponde</div>
+            </div>
           </div>
         </div>
         
         {/* Nota Importante */}
-        <div className="mt-8 bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg">
+        <div className="mt-8 bg-green-50 border-l-4 border-green-400 p-6 rounded-lg">
           <div className="flex items-center">
-            <div className="text-yellow-400 text-2xl mr-4">💡</div>
+            <div className="text-green-400 text-2xl mr-4">✅</div>
             <div>
-              <h3 className="text-lg font-semibold text-yellow-800">¡Prueba Interactiva!</h3>
-              <p className="text-yellow-700 mt-2">
-                Esta es una demostración funcional de cómo funcionarán los controles en el juego de Unity. 
-                Puedes probar todos los gestos y ver cómo el sistema los detecta en tiempo real. 
-                ¡Perfecto para practicar antes de jugar!
+              <h3 className="text-lg font-semibold text-green-800">¡Perfecto! Sistema Mejorado</h3>
+              <p className="text-green-700 mt-2">
+                Este nuevo sistema híbrido combina lo mejor de ambos mundos:
+                <strong> joystick virtual y botones</strong> para acciones básicas,
+                <strong> gestos táctiles</strong> solo para trucos en su área específica.
+                ¡Mucho más fácil de usar y controlar!
               </p>
             </div>
           </div>
