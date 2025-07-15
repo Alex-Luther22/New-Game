@@ -11,22 +11,72 @@ const TouchControlsDemo = () => {
   const [isTrickAreaActive, setIsTrickAreaActive] = useState(false);
   const [playerPosition, setPlayerPosition] = useState({ x: 250, y: 300 });
   const [isMoving, setIsMoving] = useState(false);
+  const [isCustomizationMode, setIsCustomizationMode] = useState(false);
+  const [controlSettings, setControlSettings] = useState({
+    joystickPos: { x: 80, y: 320 },
+    trickAreaPos: { x: 320, y: 80 },
+    buttonSize: 35,
+    controlOpacity: 0.8
+  });
+  const [gameFeatures, setGameFeatures] = useState({
+    ballFollow: true,
+    autoPlayerSwitch: true,
+    playerNames: false,
+    gameSpeed: 1.0
+  });
+  const [currentPlayer, setCurrentPlayer] = useState('10');
+  const [ballSpeed, setBallSpeed] = useState(0);
+  const [gamepadConnected, setGamepadConnected] = useState(false);
 
-  // Configuración de controles
-  const joystickArea = { x: 50, y: 250, radius: 75 };
-  const trickArea = { x: 200, y: 50, width: 200, height: 100 };
+  // Configuración de controles expandida
+  const joystickArea = { 
+    x: controlSettings.joystickPos.x, 
+    y: controlSettings.joystickPos.y, 
+    radius: 75 
+  };
+  
+  // Área de trucos expandida en superior derecha
+  const trickArea = { 
+    x: controlSettings.trickAreaPos.x, 
+    y: controlSettings.trickAreaPos.y, 
+    width: 250, 
+    height: 150 
+  };
+  
+  // Botones organizados mejor
   const buttons = {
-    pass: { x: 450, y: 300, radius: 35, label: 'PASE' },
-    shoot: { x: 520, y: 230, radius: 35, label: 'DISPARO' },
-    sprint: { x: 380, y: 230, radius: 30, label: 'SPRINT' },
-    tackle: { x: 520, y: 370, radius: 30, label: 'TACKLE' }
+    pass: { x: 450, y: 320, radius: controlSettings.buttonSize, label: 'PASE', color: '#4CAF50' },
+    shoot: { x: 520, y: 250, radius: controlSettings.buttonSize, label: 'DISPARO', color: '#F44336' },
+    throughPass: { x: 380, y: 250, radius: controlSettings.buttonSize - 5, label: 'PASE PROF', color: '#2196F3' },
+    cross: { x: 520, y: 390, radius: controlSettings.buttonSize - 5, label: 'CENTRO', color: '#FF9800' },
+    sprint: { x: 380, y: 390, radius: controlSettings.buttonSize - 5, label: 'SPRINT', color: '#9C27B0' },
+    tackle: { x: 450, y: 220, radius: controlSettings.buttonSize - 5, label: 'TACKLE', color: '#607D8B' },
+    slideTackle: { x: 450, y: 420, radius: controlSettings.buttonSize - 5, label: 'BARRIDA', color: '#795548' },
+    callForBall: { x: 550, y: 320, radius: controlSettings.buttonSize - 5, label: 'PEDIR', color: '#00BCD4' }
   };
 
+  // Controles de juego
+  const gameControls = {
+    changePlayer: { x: 100, y: 50, width: 80, height: 30, label: 'CAMBIAR', active: false },
+    ballCamera: { x: 190, y: 50, width: 80, height: 30, label: 'CÁMARA', active: gameFeatures.ballFollow },
+    substitution: { x: 280, y: 50, width: 80, height: 30, label: 'CAMBIO', active: false },
+    pause: { x: 500, y: 50, width: 60, height: 30, label: 'PAUSA', active: false }
+  };
+
+  // 12 trucos expandidos
   const trickPatterns = {
-    'Roulette': 'Dibuja un círculo en el área de trucos',
-    'Elastico': 'Dibuja una L en el área de trucos',
-    'Step-over': 'Dibuja un zigzag en el área de trucos',
-    'Nutmeg': 'Dibuja una línea vertical en el área de trucos'
+    'Step-over': { difficulty: 1, description: 'Dibuja zigzag', pattern: 'zigzag', unlocked: true },
+    'Roulette': { difficulty: 2, description: 'Dibuja círculo completo', pattern: 'circle', unlocked: true },
+    'Elastico': { difficulty: 3, description: 'Dibuja L (derecha-abajo)', pattern: 'L', unlocked: true },
+    'Nutmeg': { difficulty: 2, description: 'Dibuja línea vertical', pattern: 'vertical', unlocked: true },
+    'Rainbow Flick': { difficulty: 4, description: 'Dibuja arco hacia arriba', pattern: 'arc', unlocked: false },
+    'Rabona': { difficulty: 4, description: 'Dibuja curva externa', pattern: 'curve', unlocked: false },
+    'Heel Flick': { difficulty: 3, description: 'Dibuja hacia atrás', pattern: 'backward', unlocked: false },
+    'Scorpion': { difficulty: 5, description: 'Dibuja S compleja', pattern: 'S', unlocked: false },
+    'Maradona Turn': { difficulty: 4, description: 'Dibuja medio círculo', pattern: 'halfCircle', unlocked: false },
+    'Cruyff Turn': { difficulty: 3, description: 'Dibuja V invertida', pattern: 'V', unlocked: false },
+    'Bicycle Kick': { difficulty: 5, description: 'Dibuja X', pattern: 'X', unlocked: false },
+    'Fake Shot': { difficulty: 2, description: 'Dibuja línea corta', pattern: 'shortLine', unlocked: true }
   };
 
   useEffect(() => {
