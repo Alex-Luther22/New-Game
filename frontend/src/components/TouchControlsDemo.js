@@ -463,10 +463,33 @@ const TouchControlsDemo = () => {
     ctx.fill();
   };
 
+  const changePlayer = () => {
+    const players = ['10', '9', '11', '7', '8'];
+    const currentIndex = players.indexOf(currentPlayer);
+    const nextIndex = (currentIndex + 1) % players.length;
+    setCurrentPlayer(players[nextIndex]);
+  };
+
+  const togglePause = () => {
+    setGameFeatures(prev => ({
+      ...prev,
+      gameSpeed: prev.gameSpeed === 0 ? 1 : 0
+    }));
+  };
+
   const handleMouseDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    
+    // Verificar controles de juego
+    Object.entries(gameControls).forEach(([key, control]) => {
+      if (x >= control.x && x <= control.x + control.width &&
+          y >= control.y && y <= control.y + control.height) {
+        handleGameControlClick(key);
+        return;
+      }
+    });
     
     // Verificar joystick
     const joystickDistance = Math.sqrt(
@@ -498,6 +521,27 @@ const TouchControlsDemo = () => {
       setIsTrickAreaActive(true);
       setTrickGesture([{ x, y }]);
       return;
+    }
+  };
+
+  const handleGameControlClick = (controlKey) => {
+    switch (controlKey) {
+      case 'changePlayer':
+        changePlayer();
+        break;
+      case 'ballCamera':
+        setGameFeatures(prev => ({
+          ...prev,
+          ballFollow: !prev.ballFollow
+        }));
+        break;
+      case 'substitution':
+        // Simular sustitución
+        changePlayer();
+        break;
+      case 'pause':
+        togglePause();
+        break;
     }
   };
 
@@ -559,8 +603,8 @@ const TouchControlsDemo = () => {
     if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
       setIsMoving(true);
       const newPlayerPos = {
-        x: Math.max(20, Math.min(580, playerPosition.x + deltaX * 0.1)),
-        y: Math.max(20, Math.min(380, playerPosition.y + deltaY * 0.1))
+        x: Math.max(20, Math.min(580, playerPosition.x + deltaX * 0.15)),
+        y: Math.max(20, Math.min(380, playerPosition.y + deltaY * 0.15))
       };
       setPlayerPosition(newPlayerPos);
     }
@@ -574,11 +618,23 @@ const TouchControlsDemo = () => {
       case 'shoot':
         executeShoot();
         break;
+      case 'throughPass':
+        executeThroughPass();
+        break;
+      case 'cross':
+        executeCross();
+        break;
       case 'sprint':
         executeSprint();
         break;
       case 'tackle':
         executeTackle();
+        break;
+      case 'slideTackle':
+        executeSlideTackle();
+        break;
+      case 'callForBall':
+        executeCallForBall();
         break;
     }
   };
@@ -586,20 +642,43 @@ const TouchControlsDemo = () => {
   const executePass = () => {
     const direction = joystickPosition.x > 0 ? 1 : -1;
     const newBallPos = {
-      x: Math.max(20, Math.min(580, ballPosition.x + direction * 50)),
-      y: ballPosition.y
+      x: Math.max(20, Math.min(580, ballPosition.x + direction * 60)),
+      y: Math.max(20, Math.min(380, ballPosition.y + joystickPosition.y * 40))
     };
     
+    setBallSpeed(15);
     animateBall(newBallPos);
   };
 
   const executeShoot = () => {
     const direction = joystickPosition.x > 0 ? 1 : -1;
     const newBallPos = {
-      x: Math.max(20, Math.min(580, ballPosition.x + direction * 100)),
-      y: Math.max(20, Math.min(380, ballPosition.y + joystickPosition.y * 30))
+      x: Math.max(20, Math.min(580, ballPosition.x + direction * 120)),
+      y: Math.max(20, Math.min(380, ballPosition.y + joystickPosition.y * 60))
     };
     
+    setBallSpeed(25);
+    animateBall(newBallPos);
+  };
+
+  const executeThroughPass = () => {
+    const direction = joystickPosition.x > 0 ? 1 : -1;
+    const newBallPos = {
+      x: Math.max(20, Math.min(580, ballPosition.x + direction * 80)),
+      y: Math.max(20, Math.min(380, ballPosition.y + joystickPosition.y * 20))
+    };
+    
+    setBallSpeed(20);
+    animateBall(newBallPos);
+  };
+
+  const executeCross = () => {
+    const newBallPos = {
+      x: Math.max(20, Math.min(580, ballPosition.x + (joystickPosition.x > 0 ? 100 : -100))),
+      y: Math.max(20, Math.min(380, 200 + Math.random() * 60 - 30))
+    };
+    
+    setBallSpeed(18);
     animateBall(newBallPos);
   };
 
@@ -609,26 +688,48 @@ const TouchControlsDemo = () => {
   };
 
   const executeTackle = () => {
-    // Animación de tackle
     const originalPos = { ...playerPosition };
-    setPlayerPosition({ x: originalPos.x + 20, y: originalPos.y });
+    setPlayerPosition({ x: originalPos.x + 25, y: originalPos.y });
     setTimeout(() => setPlayerPosition(originalPos), 300);
+  };
+
+  const executeSlideTackle = () => {
+    const originalPos = { ...playerPosition };
+    setPlayerPosition({ x: originalPos.x + 40, y: originalPos.y + 10 });
+    setTimeout(() => setPlayerPosition(originalPos), 500);
+  };
+
+  const executeCallForBall = () => {
+    // Animar balón hacia el jugador
+    const newBallPos = {
+      x: playerPosition.x + 15,
+      y: playerPosition.y
+    };
+    setBallSpeed(12);
+    animateBall(newBallPos);
   };
 
   const animateBall = (targetPos) => {
     const startPos = { ...ballPosition };
-    const steps = 20;
+    const steps = 30;
     let currentStep = 0;
     
     const animate = () => {
       if (currentStep < steps) {
         const progress = currentStep / steps;
+        const easedProgress = 1 - Math.pow(1 - progress, 3); // Ease out cubic
         setBallPosition({
-          x: startPos.x + (targetPos.x - startPos.x) * progress,
-          y: startPos.y + (targetPos.y - startPos.y) * progress
+          x: startPos.x + (targetPos.x - startPos.x) * easedProgress,
+          y: startPos.y + (targetPos.y - startPos.y) * easedProgress
         });
+        
+        // Reducir velocidad gradualmente
+        setBallSpeed(prevSpeed => prevSpeed * 0.95);
+        
         currentStep++;
-        setTimeout(animate, 50);
+        setTimeout(animate, 33); // ~30 FPS
+      } else {
+        setBallSpeed(0);
       }
     };
     
@@ -636,74 +737,80 @@ const TouchControlsDemo = () => {
   };
 
   const detectTrick = (gesture) => {
-    if (gesture.length < 5) return 'Ninguno';
+    if (gesture.length < 8) return 'Ninguno';
     
-    if (isCircularGesture(gesture)) return 'Roulette';
-    if (isLShapeGesture(gesture)) return 'Elastico';
-    if (isZigzagGesture(gesture)) return 'Step-over';
-    if (isVerticalLineGesture(gesture)) return 'Nutmeg';
+    // Análisis más avanzado de patrones
+    const patterns = analyzeGesturePattern(gesture);
+    
+    if (patterns.isCircular && patterns.completeness > 0.7) return 'Roulette';
+    if (patterns.isLShape && patterns.sharpness > 0.8) return 'Elastico';
+    if (patterns.isZigzag && patterns.directionChanges >= 3) return 'Step-over';
+    if (patterns.isVertical && patterns.straightness > 0.8) return 'Nutmeg';
+    if (patterns.isArc && patterns.curvature > 0.6) return 'Rainbow Flick';
+    if (patterns.isCurved && patterns.smoothness > 0.7) return 'Rabona';
+    if (patterns.isBackward && patterns.direction < -0.5) return 'Heel Flick';
+    if (patterns.isSShape && patterns.waves >= 2) return 'Scorpion';
+    if (patterns.isHalfCircle && patterns.completeness > 0.4) return 'Maradona Turn';
+    if (patterns.isVShape && patterns.angle > 0.5) return 'Cruyff Turn';
+    if (patterns.isXShape && patterns.crossings >= 1) return 'Bicycle Kick';
+    if (patterns.isShortLine && patterns.length < 30) return 'Fake Shot';
     
     return 'Ninguno';
   };
 
-  const isCircularGesture = (gesture) => {
+  const analyzeGesturePattern = (gesture) => {
+    const start = gesture[0];
+    const end = gesture[gesture.length - 1];
+    const length = gesture.length;
+    
+    // Análisis de circularidad
     const center = calculateCenter(gesture);
     const avgRadius = calculateAverageRadius(gesture, center);
-    let circularPoints = 0;
-    
-    for (let point of gesture) {
+    const circularPoints = gesture.filter(point => {
       const distance = Math.sqrt(Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2));
-      if (Math.abs(distance - avgRadius) < avgRadius * 0.3) {
-        circularPoints++;
-      }
-    }
+      return Math.abs(distance - avgRadius) < avgRadius * 0.3;
+    }).length;
     
-    return circularPoints / gesture.length > 0.6;
-  };
-
-  const isLShapeGesture = (gesture) => {
-    if (gesture.length < 6) return false;
-    const midPoint = Math.floor(gesture.length / 2);
-    const firstHalf = gesture.slice(0, midPoint);
-    const secondHalf = gesture.slice(midPoint);
+    // Análisis de direccionalidad
+    const totalDistance = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+    const horizontal = Math.abs(end.x - start.x);
+    const vertical = Math.abs(end.y - start.y);
     
-    return isHorizontalGesture(firstHalf) && isVerticalGesture(secondHalf);
-  };
-
-  const isZigzagGesture = (gesture) => {
+    // Análisis de cambios de dirección
     let directionChanges = 0;
-    for (let i = 2; i < gesture.length; i++) {
+    for (let i = 2; i < length; i++) {
       const angle1 = Math.atan2(gesture[i-1].y - gesture[i-2].y, gesture[i-1].x - gesture[i-2].x);
       const angle2 = Math.atan2(gesture[i].y - gesture[i-1].y, gesture[i].x - gesture[i-1].x);
-      if (Math.abs(angle1 - angle2) > Math.PI / 3) {
+      if (Math.abs(angle1 - angle2) > Math.PI / 4) {
         directionChanges++;
       }
     }
-    return directionChanges >= 2;
-  };
-
-  const isVerticalLineGesture = (gesture) => {
-    const start = gesture[0];
-    const end = gesture[gesture.length - 1];
-    const horizontal = Math.abs(end.x - start.x);
-    const vertical = Math.abs(end.y - start.y);
-    return vertical > horizontal * 2;
-  };
-
-  const isHorizontalGesture = (gesture) => {
-    const start = gesture[0];
-    const end = gesture[gesture.length - 1];
-    const horizontal = Math.abs(end.x - start.x);
-    const vertical = Math.abs(end.y - start.y);
-    return horizontal > vertical * 1.5;
-  };
-
-  const isVerticalGesture = (gesture) => {
-    const start = gesture[0];
-    const end = gesture[gesture.length - 1];
-    const horizontal = Math.abs(end.x - start.x);
-    const vertical = Math.abs(end.y - start.y);
-    return vertical > horizontal * 1.5;
+    
+    return {
+      isCircular: circularPoints / length > 0.6,
+      completeness: circularPoints / length,
+      isLShape: horizontal > vertical && directionChanges >= 1,
+      sharpness: directionChanges / length,
+      isZigzag: directionChanges >= 3,
+      directionChanges,
+      isVertical: vertical > horizontal * 2,
+      straightness: 1 - (directionChanges / length),
+      isArc: vertical > horizontal && directionChanges <= 2,
+      curvature: Math.min(vertical / horizontal, 1),
+      isCurved: directionChanges >= 2 && directionChanges <= 4,
+      smoothness: 1 - (directionChanges / length * 2),
+      isBackward: (end.x - start.x) < 0,
+      direction: (end.x - start.x) / totalDistance,
+      isSShape: directionChanges >= 4,
+      waves: Math.floor(directionChanges / 2),
+      isHalfCircle: circularPoints / length > 0.4 && circularPoints / length < 0.7,
+      isVShape: directionChanges === 1 && horizontal > vertical,
+      angle: Math.min(horizontal / vertical, vertical / horizontal),
+      isXShape: directionChanges >= 2 && Math.abs(horizontal - vertical) < 20,
+      crossings: Math.floor(directionChanges / 2),
+      isShortLine: totalDistance < 50 && directionChanges <= 1,
+      length: totalDistance
+    };
   };
 
   const calculateCenter = (points) => {
@@ -722,29 +829,38 @@ const TouchControlsDemo = () => {
   };
 
   const executeTrick = (trick) => {
-    // Animación del truco
+    if (!trickPatterns[trick] || !trickPatterns[trick].unlocked) return;
+    
     const originalPos = { ...playerPosition };
     let animationSteps = [];
     
     switch (trick) {
       case 'Roulette':
         animationSteps = [
-          { x: originalPos.x + 5, y: originalPos.y },
-          { x: originalPos.x, y: originalPos.y - 5 },
-          { x: originalPos.x - 5, y: originalPos.y },
-          { x: originalPos.x, y: originalPos.y + 5 },
+          { x: originalPos.x + 8, y: originalPos.y },
+          { x: originalPos.x + 6, y: originalPos.y - 6 },
+          { x: originalPos.x, y: originalPos.y - 8 },
+          { x: originalPos.x - 6, y: originalPos.y - 6 },
+          { x: originalPos.x - 8, y: originalPos.y },
+          { x: originalPos.x - 6, y: originalPos.y + 6 },
+          { x: originalPos.x, y: originalPos.y + 8 },
+          { x: originalPos.x + 6, y: originalPos.y + 6 },
           originalPos
         ];
         break;
       case 'Elastico':
         animationSteps = [
-          { x: originalPos.x + 10, y: originalPos.y },
-          { x: originalPos.x, y: originalPos.y - 10 },
+          { x: originalPos.x + 15, y: originalPos.y },
+          { x: originalPos.x + 10, y: originalPos.y - 5 },
+          { x: originalPos.x, y: originalPos.y - 15 },
+          { x: originalPos.x - 10, y: originalPos.y - 10 },
           originalPos
         ];
         break;
       case 'Step-over':
         animationSteps = [
+          { x: originalPos.x + 12, y: originalPos.y },
+          { x: originalPos.x - 12, y: originalPos.y },
           { x: originalPos.x + 8, y: originalPos.y },
           { x: originalPos.x - 8, y: originalPos.y },
           originalPos
@@ -752,19 +868,41 @@ const TouchControlsDemo = () => {
         break;
       case 'Nutmeg':
         animationSteps = [
-          { x: originalPos.x, y: originalPos.y + 15 },
+          { x: originalPos.x, y: originalPos.y + 20 },
+          { x: originalPos.x, y: originalPos.y - 5 },
           originalPos
         ];
         break;
+      case 'Rainbow Flick':
+        animationSteps = [
+          { x: originalPos.x + 5, y: originalPos.y - 10 },
+          { x: originalPos.x + 10, y: originalPos.y - 15 },
+          { x: originalPos.x + 15, y: originalPos.y - 10 },
+          { x: originalPos.x + 20, y: originalPos.y },
+          originalPos
+        ];
+        break;
+      case 'Fake Shot':
+        animationSteps = [
+          { x: originalPos.x + 5, y: originalPos.y - 5 },
+          { x: originalPos.x - 5, y: originalPos.y + 5 },
+          originalPos
+        ];
+        break;
+      default:
+        animationSteps = [
+          { x: originalPos.x + 10, y: originalPos.y + 10 },
+          { x: originalPos.x - 10, y: originalPos.y - 10 },
+          originalPos
+        ];
     }
     
-    // Ejecutar animación
     let stepIndex = 0;
     const animateStep = () => {
       if (stepIndex < animationSteps.length) {
         setPlayerPosition(animationSteps[stepIndex]);
         stepIndex++;
-        setTimeout(animateStep, 150);
+        setTimeout(animateStep, 120);
       }
     };
     
@@ -781,7 +919,30 @@ const TouchControlsDemo = () => {
     setDetectedTrick('');
     setIsTrickAreaActive(false);
     setIsMoving(false);
+    setBallSpeed(0);
+    setCurrentPlayer('10');
   };
+
+  const toggleCustomization = () => {
+    setIsCustomizationMode(!isCustomizationMode);
+  };
+
+  const saveCustomization = () => {
+    localStorage.setItem('footballControlSettings', JSON.stringify(controlSettings));
+    setIsCustomizationMode(false);
+  };
+
+  const loadCustomization = () => {
+    const saved = localStorage.getItem('footballControlSettings');
+    if (saved) {
+      setControlSettings(JSON.parse(saved));
+    }
+  };
+
+  // Cargar configuración guardada al iniciar
+  useEffect(() => {
+    loadCustomization();
+  }, []);
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
