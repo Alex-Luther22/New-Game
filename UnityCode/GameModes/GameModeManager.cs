@@ -1,404 +1,616 @@
-using UnityEngine;
-using UnityEngine.SceneManagement;
+using System;
 using System.Collections.Generic;
+using UnityEngine;
+using FootballMaster.Database;
 
-public class GameModeManager : MonoBehaviour
+namespace FootballMaster.GameModes
 {
-    private static GameModeManager instance;
-    public static GameModeManager Instance
+    [Serializable]
+    public class GameModeData
     {
-        get
+        public string id;
+        public string name;
+        public string description;
+        public string icon;
+        public int maxPlayers;
+        public int duration;
+        public bool isUnlocked;
+        public Dictionary<string, object> settings;
+    }
+
+    [Serializable]
+    public class MatchData
+    {
+        public string id;
+        public string homeTeamId;
+        public string awayTeamId;
+        public int homeScore;
+        public int awayScore;
+        public string stadiumId;
+        public string gameMode;
+        public int duration;
+        public int difficulty;
+        public string weather;
+        public string timeOfDay;
+        public bool completed;
+        public string playerId;
+        public List<MatchEvent> matchEvents;
+        public MatchStatistics statistics;
+        public DateTime createdAt;
+    }
+
+    [Serializable]
+    public class MatchEvent
+    {
+        public int minute;
+        public string type;
+        public string playerId;
+        public string teamId;
+        public string description;
+        public Vector3 position;
+    }
+
+    [Serializable]
+    public class MatchStatistics
+    {
+        public int possession;
+        public int shots;
+        public int shotsOnTarget;
+        public int corners;
+        public int fouls;
+        public int yellowCards;
+        public int redCards;
+        public int passes;
+        public int passAccuracy;
+        public int tackles;
+        public int interceptions;
+    }
+
+    [Serializable]
+    public class TournamentData
+    {
+        public string id;
+        public string name;
+        public string type;
+        public List<string> participatingTeams;
+        public int currentRound;
+        public int totalRounds;
+        public List<string> matches;
+        public string winnerId;
+        public int prizeMoney;
+        public string status;
+        public DateTime createdAt;
+    }
+
+    public class GameModeManager : MonoBehaviour
+    {
+        [Header("Game Mode Configuration")]
+        public TeamDatabase teamDatabase;
+        public List<GameModeData> availableGameModes;
+        
+        [Header("Current Match")]
+        public MatchData currentMatch;
+        public TeamData homeTeam;
+        public TeamData awayTeam;
+        
+        [Header("Tournament System")]
+        public List<TournamentData> activeTournaments;
+        
+        private static GameModeManager instance;
+        public static GameModeManager Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = FindObjectOfType<GameModeManager>();
+                }
+                return instance;
+            }
+        }
+
+        private void Awake()
         {
             if (instance == null)
             {
-                instance = FindObjectOfType<GameModeManager>();
-                if (instance == null)
-                {
-                    GameObject go = new GameObject("GameModeManager");
-                    instance = go.AddComponent<GameModeManager>();
-                    DontDestroyOnLoad(go);
-                }
-            }
-            return instance;
-        }
-    }
-
-    [Header("Game Mode Settings")]
-    public GameMode currentGameMode;
-    public MatchSettings currentMatchSettings;
-    public TeamSaveData selectedHomeTeam;
-    public TeamSaveData selectedAwayTeam;
-    public List<PlayerSaveData> selectedPlayers;
-    
-    [Header("Scene Management")]
-    public string mainMenuScene = "MainMenu";
-    public string gameplayScene = "Gameplay";
-    public string careerScene = "Career";
-    public string trainingScene = "Training";
-    public string tournamentScene = "Tournament";
-    
-    void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-            InitializeGameMode();
-        }
-        else if (instance != this)
-        {
-            Destroy(gameObject);
-        }
-    }
-    
-    void InitializeGameMode()
-    {
-        currentGameMode = GameMode.QuickMatch;
-        currentMatchSettings = new MatchSettings();
-        selectedPlayers = new List<PlayerSaveData>();
-    }
-    
-    public void SetGameMode(GameMode mode)
-    {
-        currentGameMode = mode;
-        Debug.Log($"Game mode set to: {mode}");
-    }
-    
-    public void SetMatchSettings(MatchSettings settings)
-    {
-        currentMatchSettings = settings;
-    }
-    
-    public void SetSelectedTeams(TeamSaveData homeTeam, TeamSaveData awayTeam)
-    {
-        selectedHomeTeam = homeTeam;
-        selectedAwayTeam = awayTeam;
-    }
-    
-    public void StartMatch()
-    {
-        switch (currentGameMode)
-        {
-            case GameMode.QuickMatch:
-                StartQuickMatch();
-                break;
-            case GameMode.Friendly:
-                StartFriendlyMatch();
-                break;
-            case GameMode.Tournament:
-                StartTournamentMatch();
-                break;
-            case GameMode.ManagerCareer:
-                StartCareerMatch();
-                break;
-            case GameMode.PlayerCareer:
-                StartPlayerCareerMatch();
-                break;
-            case GameMode.Training:
-                StartTrainingMode();
-                break;
-            case GameMode.OnlineMultiplayer:
-                StartOnlineMatch();
-                break;
-        }
-    }
-    
-    void StartQuickMatch()
-    {
-        // Quick match with selected teams
-        currentMatchSettings.matchType = MatchType.QuickMatch;
-        currentMatchSettings.duration = 90;
-        currentMatchSettings.difficulty = DifficultyLevel.Medium;
-        currentMatchSettings.weather = WeatherType.Clear;
-        currentMatchSettings.timeOfDay = TimeOfDay.Afternoon;
-        
-        LoadGameplayScene();
-    }
-    
-    void StartFriendlyMatch()
-    {
-        // Friendly match with custom settings
-        currentMatchSettings.matchType = MatchType.Friendly;
-        currentMatchSettings.duration = currentMatchSettings.duration > 0 ? currentMatchSettings.duration : 90;
-        currentMatchSettings.difficulty = currentMatchSettings.difficulty;
-        currentMatchSettings.weather = currentMatchSettings.weather;
-        currentMatchSettings.timeOfDay = currentMatchSettings.timeOfDay;
-        
-        LoadGameplayScene();
-    }
-    
-    void StartTournamentMatch()
-    {
-        // Tournament match
-        currentMatchSettings.matchType = MatchType.Tournament;
-        currentMatchSettings.duration = 90;
-        currentMatchSettings.extraTime = true;
-        currentMatchSettings.penalties = true;
-        
-        LoadGameplayScene();
-    }
-    
-    void StartCareerMatch()
-    {
-        // Career mode match
-        currentMatchSettings.matchType = MatchType.Career;
-        currentMatchSettings.duration = 90;
-        currentMatchSettings.injuries = true;
-        currentMatchSettings.cards = true;
-        
-        LoadGameplayScene();
-    }
-    
-    void StartPlayerCareerMatch()
-    {
-        // Player career match
-        currentMatchSettings.matchType = MatchType.PlayerCareer;
-        currentMatchSettings.duration = 90;
-        currentMatchSettings.playerControlOnly = true;
-        
-        LoadGameplayScene();
-    }
-    
-    void StartTrainingMode()
-    {
-        // Training mode
-        currentMatchSettings.matchType = MatchType.Training;
-        currentMatchSettings.duration = 0; // No time limit
-        currentMatchSettings.freePractice = true;
-        
-        SceneManager.LoadScene(trainingScene);
-    }
-    
-    void StartOnlineMatch()
-    {
-        // Online multiplayer match
-        currentMatchSettings.matchType = MatchType.OnlineMultiplayer;
-        currentMatchSettings.duration = 90;
-        currentMatchSettings.onlineMode = true;
-        
-        LoadGameplayScene();
-    }
-    
-    void LoadGameplayScene()
-    {
-        // Save current game state
-        SaveCurrentGameState();
-        
-        // Load gameplay scene
-        SceneManager.LoadScene(gameplayScene);
-    }
-    
-    void SaveCurrentGameState()
-    {
-        // Save game state to PlayerPrefs for scene transition
-        PlayerPrefs.SetString("GameMode", currentGameMode.ToString());
-        PlayerPrefs.SetString("MatchSettings", JsonUtility.ToJson(currentMatchSettings));
-        
-        if (selectedHomeTeam != null)
-        {
-            PlayerPrefs.SetString("HomeTeam", JsonUtility.ToJson(selectedHomeTeam));
-        }
-        
-        if (selectedAwayTeam != null)
-        {
-            PlayerPrefs.SetString("AwayTeam", JsonUtility.ToJson(selectedAwayTeam));
-        }
-        
-        PlayerPrefs.Save();
-    }
-    
-    public void LoadGameState()
-    {
-        // Load game state from PlayerPrefs
-        if (PlayerPrefs.HasKey("GameMode"))
-        {
-            System.Enum.TryParse(PlayerPrefs.GetString("GameMode"), out currentGameMode);
-        }
-        
-        if (PlayerPrefs.HasKey("MatchSettings"))
-        {
-            string settingsJson = PlayerPrefs.GetString("MatchSettings");
-            currentMatchSettings = JsonUtility.FromJson<MatchSettings>(settingsJson);
-        }
-        
-        if (PlayerPrefs.HasKey("HomeTeam"))
-        {
-            string homeTeamJson = PlayerPrefs.GetString("HomeTeam");
-            selectedHomeTeam = JsonUtility.FromJson<TeamSaveData>(homeTeamJson);
-        }
-        
-        if (PlayerPrefs.HasKey("AwayTeam"))
-        {
-            string awayTeamJson = PlayerPrefs.GetString("AwayTeam");
-            selectedAwayTeam = JsonUtility.FromJson<TeamSaveData>(awayTeamJson);
-        }
-    }
-    
-    public void ReturnToMainMenu()
-    {
-        SceneManager.LoadScene(mainMenuScene);
-    }
-    
-    public void ShowPostMatchResults(MatchResult result)
-    {
-        // Save match result
-        SaveSystem.Instance.SaveMatchResult(result);
-        
-        // Update user stats
-        UpdateUserStats(result);
-        
-        // Show results screen
-        PostMatchManager.Instance.ShowResults(result);
-    }
-    
-    void UpdateUserStats(MatchResult result)
-    {
-        UserProfile user = SaveSystem.Instance.LoadUserProfile(1);
-        if (user != null)
-        {
-            user.TotalMatches++;
-            
-            if (result.Result == "Win")
-            {
-                user.TotalWins++;
-                user.Coins += CalculateMatchReward(result);
-                user.Experience += 100;
-            }
-            else if (result.Result == "Draw")
-            {
-                user.Coins += CalculateMatchReward(result) / 2;
-                user.Experience += 50;
+                instance = this;
+                DontDestroyOnLoad(gameObject);
+                InitializeGameModes();
             }
             else
             {
-                user.Experience += 25;
+                Destroy(gameObject);
+            }
+        }
+
+        private void InitializeGameModes()
+        {
+            availableGameModes = new List<GameModeData>
+            {
+                new GameModeData
+                {
+                    id = "quick_match",
+                    name = "Quick Match",
+                    description = "Jump into a quick match with any team",
+                    icon = "⚡",
+                    maxPlayers = 2,
+                    duration = 90,
+                    isUnlocked = true,
+                    settings = new Dictionary<string, object>
+                    {
+                        { "allowCustomTeams", true },
+                        { "difficultyOptions", new List<string> { "Easy", "Normal", "Hard" } },
+                        { "weatherOptions", new List<string> { "Sunny", "Rainy", "Cloudy" } }
+                    }
+                },
+                new GameModeData
+                {
+                    id = "career",
+                    name = "Career Mode",
+                    description = "Build your legacy as a manager",
+                    icon = "👔",
+                    maxPlayers = 1,
+                    duration = 0,
+                    isUnlocked = true,
+                    settings = new Dictionary<string, object>
+                    {
+                        { "maxSeasons", 25 },
+                        { "transferMarket", true },
+                        { "youthAcademy", true }
+                    }
+                },
+                new GameModeData
+                {
+                    id = "tournament",
+                    name = "Tournament",
+                    description = "Compete in various tournaments",
+                    icon = "🏆",
+                    maxPlayers = 32,
+                    duration = 0,
+                    isUnlocked = true,
+                    settings = new Dictionary<string, object>
+                    {
+                        { "tournamentTypes", new List<string> { "Cup", "League", "Champions" } },
+                        { "groupStage", true },
+                        { "knockoutRounds", true }
+                    }
+                },
+                new GameModeData
+                {
+                    id = "futsal",
+                    name = "Futsal",
+                    description = "Fast-paced 5v5 indoor football",
+                    icon = "🏟️",
+                    maxPlayers = 2,
+                    duration = 40,
+                    isUnlocked = true,
+                    settings = new Dictionary<string, object>
+                    {
+                        { "teamSize", 5 },
+                        { "fieldSize", "small" },
+                        { "ballType", "futsal" }
+                    }
+                },
+                new GameModeData
+                {
+                    id = "online",
+                    name = "Online Match",
+                    description = "Play against other players online",
+                    icon = "🌐",
+                    maxPlayers = 2,
+                    duration = 90,
+                    isUnlocked = false,
+                    settings = new Dictionary<string, object>
+                    {
+                        { "rankingSystem", true },
+                        { "matchmaking", true },
+                        { "spectatorMode", true }
+                    }
+                }
+            };
+        }
+
+        public void StartQuickMatch(string homeTeamId, string awayTeamId, int difficulty = 3)
+        {
+            homeTeam = teamDatabase.GetTeamById(homeTeamId);
+            awayTeam = teamDatabase.GetTeamById(awayTeamId);
+            
+            if (homeTeam == null || awayTeam == null)
+            {
+                Debug.LogError("Teams not found for quick match!");
+                return;
+            }
+
+            currentMatch = new MatchData
+            {
+                id = Guid.NewGuid().ToString(),
+                homeTeamId = homeTeamId,
+                awayTeamId = awayTeamId,
+                homeScore = 0,
+                awayScore = 0,
+                stadiumId = GetRandomStadium(),
+                gameMode = "quick_match",
+                duration = 90,
+                difficulty = difficulty,
+                weather = GetRandomWeather(),
+                timeOfDay = GetRandomTimeOfDay(),
+                completed = false,
+                playerId = GetCurrentPlayerId(),
+                matchEvents = new List<MatchEvent>(),
+                statistics = new MatchStatistics(),
+                createdAt = DateTime.Now
+            };
+
+            OnMatchStarted?.Invoke(currentMatch);
+            Debug.Log($"Quick match started: {homeTeam.name} vs {awayTeam.name}");
+        }
+
+        public void StartCareerMatch(string opponentTeamId)
+        {
+            var careerManager = CareerManager.Instance;
+            if (careerManager == null || careerManager.currentTeam == null)
+            {
+                Debug.LogError("Career mode not initialized!");
+                return;
+            }
+
+            homeTeam = careerManager.currentTeam;
+            awayTeam = teamDatabase.GetTeamById(opponentTeamId);
+            
+            if (awayTeam == null)
+            {
+                Debug.LogError("Opponent team not found!");
+                return;
+            }
+
+            currentMatch = new MatchData
+            {
+                id = Guid.NewGuid().ToString(),
+                homeTeamId = homeTeam.id,
+                awayTeamId = awayTeam.id,
+                homeScore = 0,
+                awayScore = 0,
+                stadiumId = homeTeam.stadiumName,
+                gameMode = "career",
+                duration = 90,
+                difficulty = CalculateCareerDifficulty(awayTeam),
+                weather = GetRandomWeather(),
+                timeOfDay = GetRandomTimeOfDay(),
+                completed = false,
+                playerId = GetCurrentPlayerId(),
+                matchEvents = new List<MatchEvent>(),
+                statistics = new MatchStatistics(),
+                createdAt = DateTime.Now
+            };
+
+            OnMatchStarted?.Invoke(currentMatch);
+        }
+
+        public void StartFutsalMatch(string homeTeamId, string awayTeamId)
+        {
+            homeTeam = teamDatabase.GetTeamById(homeTeamId);
+            awayTeam = teamDatabase.GetTeamById(awayTeamId);
+            
+            if (homeTeam == null || awayTeam == null)
+            {
+                Debug.LogError("Teams not found for futsal match!");
+                return;
+            }
+
+            currentMatch = new MatchData
+            {
+                id = Guid.NewGuid().ToString(),
+                homeTeamId = homeTeamId,
+                awayTeamId = awayTeamId,
+                homeScore = 0,
+                awayScore = 0,
+                stadiumId = "futsal_arena",
+                gameMode = "futsal",
+                duration = 40,
+                difficulty = 3,
+                weather = "indoor",
+                timeOfDay = "artificial",
+                completed = false,
+                playerId = GetCurrentPlayerId(),
+                matchEvents = new List<MatchEvent>(),
+                statistics = new MatchStatistics(),
+                createdAt = DateTime.Now
+            };
+
+            OnMatchStarted?.Invoke(currentMatch);
+        }
+
+        public TournamentData CreateTournament(string tournamentName, string tournamentType, List<string> teamIds)
+        {
+            var tournament = new TournamentData
+            {
+                id = Guid.NewGuid().ToString(),
+                name = tournamentName,
+                type = tournamentType,
+                participatingTeams = teamIds,
+                currentRound = 1,
+                totalRounds = CalculateTotalRounds(teamIds.Count),
+                matches = new List<string>(),
+                winnerId = "",
+                prizeMoney = CalculatePrizeMoney(tournamentType),
+                status = "upcoming",
+                createdAt = DateTime.Now
+            };
+
+            activeTournaments.Add(tournament);
+            GenerateTournamentMatches(tournament);
+            
+            OnTournamentCreated?.Invoke(tournament);
+            return tournament;
+        }
+
+        private void GenerateTournamentMatches(TournamentData tournament)
+        {
+            if (tournament.type == "cup")
+            {
+                GenerateCupMatches(tournament);
+            }
+            else if (tournament.type == "league")
+            {
+                GenerateLeagueMatches(tournament);
+            }
+        }
+
+        private void GenerateCupMatches(TournamentData tournament)
+        {
+            // Generate knockout tournament matches
+            var teams = new List<string>(tournament.participatingTeams);
+            
+            while (teams.Count > 1)
+            {
+                var roundMatches = new List<string>();
+                
+                for (int i = 0; i < teams.Count; i += 2)
+                {
+                    if (i + 1 < teams.Count)
+                    {
+                        var match = new MatchData
+                        {
+                            id = Guid.NewGuid().ToString(),
+                            homeTeamId = teams[i],
+                            awayTeamId = teams[i + 1],
+                            homeScore = 0,
+                            awayScore = 0,
+                            stadiumId = GetRandomStadium(),
+                            gameMode = "tournament",
+                            duration = 90,
+                            difficulty = 3,
+                            weather = GetRandomWeather(),
+                            timeOfDay = GetRandomTimeOfDay(),
+                            completed = false,
+                            playerId = GetCurrentPlayerId(),
+                            matchEvents = new List<MatchEvent>(),
+                            statistics = new MatchStatistics(),
+                            createdAt = DateTime.Now
+                        };
+                        
+                        roundMatches.Add(match.id);
+                        tournament.matches.Add(match.id);
+                    }
+                }
+                
+                // Simulate match results and advance winners
+                teams = SimulateRoundResults(teams);
+            }
+        }
+
+        private void GenerateLeagueMatches(TournamentData tournament)
+        {
+            // Generate round-robin tournament matches
+            var teams = tournament.participatingTeams;
+            
+            for (int i = 0; i < teams.Count; i++)
+            {
+                for (int j = i + 1; j < teams.Count; j++)
+                {
+                    // Home match
+                    var homeMatch = new MatchData
+                    {
+                        id = Guid.NewGuid().ToString(),
+                        homeTeamId = teams[i],
+                        awayTeamId = teams[j],
+                        homeScore = 0,
+                        awayScore = 0,
+                        stadiumId = GetRandomStadium(),
+                        gameMode = "tournament",
+                        duration = 90,
+                        difficulty = 3,
+                        weather = GetRandomWeather(),
+                        timeOfDay = GetRandomTimeOfDay(),
+                        completed = false,
+                        playerId = GetCurrentPlayerId(),
+                        matchEvents = new List<MatchEvent>(),
+                        statistics = new MatchStatistics(),
+                        createdAt = DateTime.Now
+                    };
+                    
+                    // Away match
+                    var awayMatch = new MatchData
+                    {
+                        id = Guid.NewGuid().ToString(),
+                        homeTeamId = teams[j],
+                        awayTeamId = teams[i],
+                        homeScore = 0,
+                        awayScore = 0,
+                        stadiumId = GetRandomStadium(),
+                        gameMode = "tournament",
+                        duration = 90,
+                        difficulty = 3,
+                        weather = GetRandomWeather(),
+                        timeOfDay = GetRandomTimeOfDay(),
+                        completed = false,
+                        playerId = GetCurrentPlayerId(),
+                        matchEvents = new List<MatchEvent>(),
+                        statistics = new MatchStatistics(),
+                        createdAt = DateTime.Now
+                    };
+                    
+                    tournament.matches.Add(homeMatch.id);
+                    tournament.matches.Add(awayMatch.id);
+                }
+            }
+        }
+
+        public void CompleteMatch(int homeGoals, int awayGoals)
+        {
+            if (currentMatch == null) return;
+            
+            currentMatch.homeScore = homeGoals;
+            currentMatch.awayScore = awayGoals;
+            currentMatch.completed = true;
+            
+            // Update career stats if in career mode
+            if (currentMatch.gameMode == "career")
+            {
+                var careerManager = CareerManager.Instance;
+                if (careerManager != null)
+                {
+                    bool isWin = homeGoals > awayGoals;
+                    bool isDraw = homeGoals == awayGoals;
+                    
+                    // Update season stats
+                    var stats = careerManager.currentCareer.seasonStats;
+                    if (isWin) stats.wins++;
+                    else if (isDraw) stats.draws++;
+                    else stats.losses++;
+                    
+                    stats.goalsFor += homeGoals;
+                    stats.goalsAgainst += awayGoals;
+                    stats.matchesPlayed++;
+                    
+                    careerManager.SaveCareerData();
+                }
             }
             
-            SaveSystem.Instance.SaveUserProfile(user);
+            OnMatchCompleted?.Invoke(currentMatch);
         }
-    }
-    
-    int CalculateMatchReward(MatchResult result)
-    {
-        int baseReward = 1000;
-        
-        switch (currentGameMode)
+
+        public void AddMatchEvent(int minute, string eventType, string playerId, string teamId, string description, Vector3 position)
         {
-            case GameMode.QuickMatch:
-                return baseReward;
-            case GameMode.Friendly:
-                return baseReward / 2;
-            case GameMode.Tournament:
-                return baseReward * 3;
-            case GameMode.ManagerCareer:
-                return baseReward * 2;
-            case GameMode.PlayerCareer:
-                return baseReward * 2;
-            case GameMode.OnlineMultiplayer:
-                return baseReward * 4;
-            default:
-                return baseReward;
+            if (currentMatch == null) return;
+            
+            var matchEvent = new MatchEvent
+            {
+                minute = minute,
+                type = eventType,
+                playerId = playerId,
+                teamId = teamId,
+                description = description,
+                position = position
+            };
+            
+            currentMatch.matchEvents.Add(matchEvent);
+            OnMatchEvent?.Invoke(matchEvent);
         }
-    }
-    
-    public bool IsCareerMode()
-    {
-        return currentGameMode == GameMode.ManagerCareer || currentGameMode == GameMode.PlayerCareer;
-    }
-    
-    public bool IsOnlineMode()
-    {
-        return currentGameMode == GameMode.OnlineMultiplayer;
-    }
-    
-    public bool IsTrainingMode()
-    {
-        return currentGameMode == GameMode.Training;
-    }
-    
-    public void PauseGame()
-    {
-        Time.timeScale = 0f;
-    }
-    
-    public void ResumeGame()
-    {
-        Time.timeScale = 1f;
-    }
-    
-    public void QuitToMainMenu()
-    {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(mainMenuScene);
-    }
-}
 
-[System.Serializable]
-public class MatchSettings
-{
-    public MatchType matchType = MatchType.QuickMatch;
-    public int duration = 90;
-    public DifficultyLevel difficulty = DifficultyLevel.Medium;
-    public WeatherType weather = WeatherType.Clear;
-    public TimeOfDay timeOfDay = TimeOfDay.Afternoon;
-    public bool extraTime = false;
-    public bool penalties = false;
-    public bool injuries = false;
-    public bool cards = false;
-    public bool offsideRule = true;
-    public bool foulsEnabled = true;
-    public bool playerControlOnly = false;
-    public bool freePractice = false;
-    public bool onlineMode = false;
-    public string stadium = "";
-    public int attendance = 0;
-}
+        public void UpdateMatchStatistics(MatchStatistics stats)
+        {
+            if (currentMatch == null) return;
+            
+            currentMatch.statistics = stats;
+        }
 
-public enum GameMode
-{
-    QuickMatch,
-    Friendly,
-    Tournament,
-    ManagerCareer,
-    PlayerCareer,
-    CreateClub,
-    Training,
-    OnlineMultiplayer
-}
+        private int CalculateCareerDifficulty(TeamData opponentTeam)
+        {
+            var careerManager = CareerManager.Instance;
+            if (careerManager == null) return 3;
+            
+            int myRating = careerManager.currentTeam.overallRating;
+            int opponentRating = opponentTeam.overallRating;
+            
+            int ratingDiff = opponentRating - myRating;
+            
+            if (ratingDiff > 10) return 5;
+            if (ratingDiff > 5) return 4;
+            if (ratingDiff > -5) return 3;
+            if (ratingDiff > -10) return 2;
+            return 1;
+        }
 
-public enum MatchType
-{
-    QuickMatch,
-    Friendly,
-    Tournament,
-    Career,
-    PlayerCareer,
-    Training,
-    OnlineMultiplayer
-}
+        private int CalculateTotalRounds(int teamCount)
+        {
+            return Mathf.CeilToInt(Mathf.Log(teamCount, 2));
+        }
 
-public enum DifficultyLevel
-{
-    Beginner,
-    Easy,
-    Medium,
-    Hard,
-    Legendary
-}
+        private int CalculatePrizeMoney(string tournamentType)
+        {
+            switch (tournamentType)
+            {
+                case "cup": return 1000000;
+                case "league": return 2000000;
+                case "champions": return 5000000;
+                default: return 500000;
+            }
+        }
 
-public enum WeatherType
-{
-    Clear,
-    Cloudy,
-    Rainy,
-    Snowy,
-    Foggy
-}
+        private List<string> SimulateRoundResults(List<string> teams)
+        {
+            List<string> winners = new List<string>();
+            
+            for (int i = 0; i < teams.Count; i += 2)
+            {
+                if (i + 1 < teams.Count)
+                {
+                    // Simple random winner selection
+                    winners.Add(UnityEngine.Random.Range(0, 2) == 0 ? teams[i] : teams[i + 1]);
+                }
+                else
+                {
+                    winners.Add(teams[i]); // Bye
+                }
+            }
+            
+            return winners;
+        }
 
-public enum TimeOfDay
-{
-    Morning,
-    Afternoon,
-    Evening,
-    Night
+        private string GetRandomStadium()
+        {
+            var stadiums = teamDatabase.stadiums;
+            return stadiums[UnityEngine.Random.Range(0, stadiums.Count)].id;
+        }
+
+        private string GetRandomWeather()
+        {
+            string[] weatherOptions = { "sunny", "cloudy", "rainy", "windy" };
+            return weatherOptions[UnityEngine.Random.Range(0, weatherOptions.Length)];
+        }
+
+        private string GetRandomTimeOfDay()
+        {
+            string[] timeOptions = { "day", "night", "afternoon", "evening" };
+            return timeOptions[UnityEngine.Random.Range(0, timeOptions.Length)];
+        }
+
+        private string GetCurrentPlayerId()
+        {
+            return PlayerPrefs.GetString("current_player_id", "default_player");
+        }
+
+        public GameModeData GetGameMode(string gameModeId)
+        {
+            return availableGameModes.Find(mode => mode.id == gameModeId);
+        }
+
+        public void UnlockGameMode(string gameModeId)
+        {
+            var gameMode = GetGameMode(gameModeId);
+            if (gameMode != null)
+            {
+                gameMode.isUnlocked = true;
+                OnGameModeUnlocked?.Invoke(gameMode);
+            }
+        }
+
+        // Events
+        public System.Action<MatchData> OnMatchStarted;
+        public System.Action<MatchData> OnMatchCompleted;
+        public System.Action<MatchEvent> OnMatchEvent;
+        public System.Action<TournamentData> OnTournamentCreated;
+        public System.Action<GameModeData> OnGameModeUnlocked;
+    }
 }

@@ -1,616 +1,378 @@
-using UnityEngine;
-using UnityEngine.UI;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using UnityEngine;
+using FootballMaster.Database;
 
-public class CareerManager : MonoBehaviour
+namespace FootballMaster.Career
 {
-    [Header("Career UI")]
-    public GameObject careerMenuPanel;
-    public GameObject newCareerPanel;
-    public GameObject careerDashboardPanel;
-    public GameObject transferMarketPanel;
-    public GameObject trainingCenterPanel;
-    public GameObject calendarPanel;
-    public GameObject clubManagementPanel;
-    
-    [Header("Career Info")]
-    public Text seasonText;
-    public Text weekText;
-    public Text clubNameText;
-    public Text leaguePositionText;
-    public Text budgetText;
-    public Text reputationText;
-    public Text nextMatchText;
-    public Image clubLogo;
-    
-    [Header("Team Management")]
-    public Transform playerListParent;
-    public GameObject playerCardPrefab;
-    public Text teamOverallText;
-    public Text teamChemistryText;
-    public Text teamMoraleText;
-    
-    [Header("Career Buttons")]
-    public Button playNextMatchButton;
-    public Button simulateMatchButton;
-    public Button transferMarketButton;
-    public Button trainingCenterButton;
-    public Button clubManagementButton;
-    public Button calendarButton;
-    public Button saveCareerButton;
-    
-    [Header("New Career")]
-    public Dropdown careerTypeDropdown;
-    public Dropdown difficultyDropdown;
-    public InputField managerNameInput;
-    public Button createCareerButton;
-    
-    private CareerSaveData currentCareer;
-    private List<PlayerSaveData> squadPlayers;
-    private List<MatchFixture> fixtures;
-    private LeagueTable leagueTable;
-    
-    void Start()
+    [Serializable]
+    public class CareerData
     {
-        InitializeCareerManager();
+        public string id;
+        public string userId;
+        public string currentTeamId;
+        public int currentSeason;
+        public int reputation;
+        public int budget;
+        public List<ObjectiveData> objectives;
+        public SeasonStats seasonStats;
+        public List<TransferData> transferHistory;
+        public DateTime contractEndDate;
+        public DateTime createdAt;
     }
-    
-    void InitializeCareerManager()
+
+    [Serializable]
+    public class ObjectiveData
     {
-        // Setup button listeners
-        playNextMatchButton.onClick.AddListener(PlayNextMatch);
-        simulateMatchButton.onClick.AddListener(SimulateNextMatch);
-        transferMarketButton.onClick.AddListener(ShowTransferMarket);
-        trainingCenterButton.onClick.AddListener(ShowTrainingCenter);
-        clubManagementButton.onClick.AddListener(ShowClubManagement);
-        calendarButton.onClick.AddListener(ShowCalendar);
-        saveCareerButton.onClick.AddListener(SaveCareer);
-        createCareerButton.onClick.AddListener(CreateCareer);
+        public string type;
+        public string description;
+        public int target;
+        public int reward;
+        public bool completed;
+        public DateTime deadline;
+    }
+
+    [Serializable]
+    public class SeasonStats
+    {
+        public int matchesPlayed;
+        public int wins;
+        public int draws;
+        public int losses;
+        public int goalsFor;
+        public int goalsAgainst;
+        public int leaguePosition;
+        public int points;
+        public List<string> trophiesWon;
+    }
+
+    [Serializable]
+    public class TransferData
+    {
+        public string playerId;
+        public string playerName;
+        public string fromTeamId;
+        public string toTeamId;
+        public int transferFee;
+        public DateTime transferDate;
+        public string transferType; // "buy", "sell", "loan"
+    }
+
+    public class CareerManager : MonoBehaviour
+    {
+        [Header("Career Settings")]
+        public TeamDatabase teamDatabase;
+        public int maxSeasonsPerCareer = 25;
+        public int startingBudget = 5000000;
+        public int startingReputation = 1;
         
-        // Initialize dropdown options
-        SetupCareerTypeDropdown();
-        SetupDifficultyDropdown();
+        [Header("Current Career")]
+        public CareerData currentCareer;
+        public TeamData currentTeam;
         
-        squadPlayers = new List<PlayerSaveData>();
-        fixtures = new List<MatchFixture>();
-    }
-    
-    void SetupCareerTypeDropdown()
-    {
-        careerTypeDropdown.ClearOptions();
-        List<string> careerTypes = new List<string>
+        [Header("Season Management")]
+        public int matchesPerSeason = 38;
+        public List<string> availableTournaments;
+        
+        private static CareerManager instance;
+        public static CareerManager Instance
         {
-            "Manager Career",
-            "Player Career",
-            "Create a Club"
-        };
-        careerTypeDropdown.AddOptions(careerTypes);
-    }
-    
-    void SetupDifficultyDropdown()
-    {
-        difficultyDropdown.ClearOptions();
-        List<string> difficulties = new List<string>
+            get
+            {
+                if (instance == null)
+                {
+                    instance = FindObjectOfType<CareerManager>();
+                }
+                return instance;
+            }
+        }
+
+        private void Awake()
         {
-            "Beginner",
-            "Amateur",
-            "Semi-Pro",
-            "Professional",
-            "World Class",
-            "Legendary"
-        };
-        difficultyDropdown.AddOptions(difficulties);
-    }
-    
-    public void CreateNewCareer()
-    {
-        careerMenuPanel.SetActive(false);
-        newCareerPanel.SetActive(true);
-    }
-    
-    public void ContinueCareer()
-    {
-        UserProfile user = SaveSystem.Instance.LoadUserProfile(1);
-        if (user != null && user.CurrentCareer > 0)
+            if (instance == null)
+            {
+                instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
+
+        private void Start()
         {
-            currentCareer = SaveSystem.Instance.LoadCareerProgress(user.CurrentCareer);
+            LoadCareerData();
+        }
+
+        public void StartNewCareer(string teamId, string userId)
+        {
+            TeamData selectedTeam = teamDatabase.GetTeamById(teamId);
+            if (selectedTeam == null)
+            {
+                Debug.LogError($"Team with ID {teamId} not found!");
+                return;
+            }
+
+            currentCareer = new CareerData
+            {
+                id = Guid.NewGuid().ToString(),
+                userId = userId,
+                currentTeamId = teamId,
+                currentSeason = 1,
+                reputation = startingReputation,
+                budget = startingBudget,
+                objectives = GenerateSeasonObjectives(selectedTeam),
+                seasonStats = new SeasonStats(),
+                transferHistory = new List<TransferData>(),
+                contractEndDate = DateTime.Now.AddYears(2),
+                createdAt = DateTime.Now
+            };
+
+            currentTeam = selectedTeam;
+            SaveCareerData();
+            
+            Debug.Log($"Started new career with {selectedTeam.name}");
+            OnCareerStarted?.Invoke(currentCareer);
+        }
+
+        public void LoadCareerData()
+        {
+            string careerJson = PlayerPrefs.GetString("current_career", "");
+            if (!string.IsNullOrEmpty(careerJson))
+            {
+                currentCareer = JsonUtility.FromJson<CareerData>(careerJson);
+                currentTeam = teamDatabase.GetTeamById(currentCareer.currentTeamId);
+            }
+        }
+
+        public void SaveCareerData()
+        {
             if (currentCareer != null)
             {
-                LoadCareerDashboard();
+                string careerJson = JsonUtility.ToJson(currentCareer);
+                PlayerPrefs.SetString("current_career", careerJson);
+                PlayerPrefs.Save();
             }
         }
-    }
-    
-    void CreateCareer()
-    {
-        if (string.IsNullOrEmpty(managerNameInput.text))
-        {
-            ShowNotification("Please enter a manager name");
-            return;
-        }
-        
-        // Create new career
-        CareerSaveData newCareer = new CareerSaveData
-        {
-            UserId = 1,
-            CurrentTeamId = 0, // Will be set when team is selected
-            Season = 1,
-            Week = 1,
-            CareerType = careerTypeDropdown.options[careerTypeDropdown.value].text,
-            Budget = 50000000,
-            Reputation = 50,
-            StartDate = System.DateTime.Now,
-            LastSaved = System.DateTime.Now,
-            CurrentLeague = "",
-            LeaguePosition = 0,
-            TrophiesWon = 0,
-            IsActive = true
-        };
-        
-        SaveSystem.Instance.SaveCareerProgress(newCareer);
-        
-        // Update user profile
-        UserProfile user = SaveSystem.Instance.LoadUserProfile(1);
-        user.CurrentCareer = newCareer.CareerId;
-        SaveSystem.Instance.SaveUserProfile(user);
-        
-        currentCareer = newCareer;
-        
-        // Show team selection
-        ShowTeamSelection();
-    }
-    
-    void ShowTeamSelection()
-    {
-        TeamSelectManager teamSelectManager = FindObjectOfType<TeamSelectManager>();
-        if (teamSelectManager != null)
-        {
-            teamSelectManager.ShowTeamSelectionForCareer(OnTeamSelected);
-        }
-    }
-    
-    void OnTeamSelected(TeamSaveData selectedTeam)
-    {
-        currentCareer.CurrentTeamId = selectedTeam.TeamId;
-        currentCareer.CurrentLeague = selectedTeam.League;
-        currentCareer.Budget = selectedTeam.Budget;
-        
-        SaveSystem.Instance.SaveCareerProgress(currentCareer);
-        
-        // Generate season fixtures
-        GenerateSeasonFixtures();
-        
-        // Load squad
-        LoadSquadPlayers();
-        
-        // Show career dashboard
-        LoadCareerDashboard();
-    }
-    
-    void LoadCareerDashboard()
-    {
-        newCareerPanel.SetActive(false);
-        careerDashboardPanel.SetActive(true);
-        
-        UpdateCareerUI();
-        UpdateSquadDisplay();
-        UpdateNextMatchInfo();
-    }
-    
-    void UpdateCareerUI()
-    {
-        TeamSaveData currentTeam = SaveSystem.Instance.GetAllTeams()
-            .FirstOrDefault(t => t.TeamId == currentCareer.CurrentTeamId);
-        
-        if (currentTeam != null)
-        {
-            seasonText.text = $"Season {currentCareer.Season}";
-            weekText.text = $"Week {currentCareer.Week}";
-            clubNameText.text = currentTeam.TeamName;
-            leaguePositionText.text = $"Position: {currentCareer.LeaguePosition}";
-            budgetText.text = $"Budget: ${FormatMoney(currentCareer.Budget)}";
-            reputationText.text = $"Reputation: {currentCareer.Reputation}%";
-        }
-    }
-    
-    void LoadSquadPlayers()
-    {
-        squadPlayers = SaveSystem.Instance.GetPlayersByTeam(currentCareer.CurrentTeamId);
-    }
-    
-    void UpdateSquadDisplay()
-    {
-        // Clear existing player cards
-        foreach (Transform child in playerListParent)
-        {
-            Destroy(child.gameObject);
-        }
-        
-        // Calculate team stats
-        int totalOverall = 0;
-        int chemistry = 85; // Default chemistry
-        int morale = 75; // Default morale
-        
-        foreach (PlayerSaveData player in squadPlayers)
-        {
-            // Create player card
-            GameObject playerCard = Instantiate(playerCardPrefab, playerListParent);
-            PlayerCard card = playerCard.GetComponent<PlayerCard>();
-            if (card != null)
-            {
-                card.SetupPlayerCard(player);
-            }
-            
-            totalOverall += player.Overall;
-        }
-        
-        int teamOverall = squadPlayers.Count > 0 ? totalOverall / squadPlayers.Count : 0;
-        
-        teamOverallText.text = $"Overall: {teamOverall}";
-        teamChemistryText.text = $"Chemistry: {chemistry}%";
-        teamMoraleText.text = $"Morale: {morale}%";
-    }
-    
-    void GenerateSeasonFixtures()
-    {
-        fixtures.Clear();
-        
-        // Get all teams in the same league
-        List<TeamSaveData> leagueTeams = SaveSystem.Instance.GetAllTeams()
-            .Where(t => t.League == currentCareer.CurrentLeague)
-            .ToList();
-        
-        // Generate fixtures for the season
-        for (int week = 1; week <= 38; week++)
-        {
-            for (int i = 0; i < leagueTeams.Count; i += 2)
-            {
-                if (i + 1 < leagueTeams.Count)
-                {
-                    MatchFixture fixture = new MatchFixture
-                    {
-                        Week = week,
-                        HomeTeamId = leagueTeams[i].TeamId,
-                        AwayTeamId = leagueTeams[i + 1].TeamId,
-                        Competition = currentCareer.CurrentLeague,
-                        IsPlayed = false,
-                        Stadium = leagueTeams[i].StadiumName
-                    };
-                    
-                    fixtures.Add(fixture);
-                }
-            }
-        }
-    }
-    
-    void UpdateNextMatchInfo()
-    {
-        MatchFixture nextMatch = fixtures.FirstOrDefault(f => !f.IsPlayed && 
-            (f.HomeTeamId == currentCareer.CurrentTeamId || f.AwayTeamId == currentCareer.CurrentTeamId));
-        
-        if (nextMatch != null)
-        {
-            TeamSaveData opponent = SaveSystem.Instance.GetAllTeams()
-                .FirstOrDefault(t => t.TeamId == (nextMatch.HomeTeamId == currentCareer.CurrentTeamId ? 
-                    nextMatch.AwayTeamId : nextMatch.HomeTeamId));
-            
-            if (opponent != null)
-            {
-                string homeAway = nextMatch.HomeTeamId == currentCareer.CurrentTeamId ? "vs" : "at";
-                nextMatchText.text = $"Next: {homeAway} {opponent.TeamName}";
-            }
-        }
-        else
-        {
-            nextMatchText.text = "No upcoming matches";
-        }
-    }
-    
-    void PlayNextMatch()
-    {
-        MatchFixture nextMatch = fixtures.FirstOrDefault(f => !f.IsPlayed && 
-            (f.HomeTeamId == currentCareer.CurrentTeamId || f.AwayTeamId == currentCareer.CurrentTeamId));
-        
-        if (nextMatch != null)
-        {
-            // Setup match
-            TeamSaveData homeTeam = SaveSystem.Instance.GetAllTeams()
-                .FirstOrDefault(t => t.TeamId == nextMatch.HomeTeamId);
-            TeamSaveData awayTeam = SaveSystem.Instance.GetAllTeams()
-                .FirstOrDefault(t => t.TeamId == nextMatch.AwayTeamId);
-            
-            GameModeManager.Instance.SetGameMode(GameMode.ManagerCareer);
-            GameModeManager.Instance.SetSelectedTeams(homeTeam, awayTeam);
-            
-            // Set match settings
-            MatchSettings settings = new MatchSettings
-            {
-                matchType = MatchType.Career,
-                duration = 90,
-                injuries = true,
-                cards = true,
-                stadium = nextMatch.Stadium
-            };
-            
-            GameModeManager.Instance.SetMatchSettings(settings);
-            GameModeManager.Instance.StartMatch();
-        }
-    }
-    
-    void SimulateNextMatch()
-    {
-        MatchFixture nextMatch = fixtures.FirstOrDefault(f => !f.IsPlayed && 
-            (f.HomeTeamId == currentCareer.CurrentTeamId || f.AwayTeamId == currentCareer.CurrentTeamId));
-        
-        if (nextMatch != null)
-        {
-            // Simulate match result
-            MatchResult result = SimulateMatch(nextMatch);
-            
-            // Save result
-            SaveSystem.Instance.SaveMatchResult(result);
-            
-            // Update career progress
-            ProcessMatchResult(result);
-            
-            // Mark fixture as played
-            nextMatch.IsPlayed = true;
-            nextMatch.Result = result;
-            
-            // Update UI
-            UpdateCareerUI();
-            UpdateNextMatchInfo();
-            
-            // Show result notification
-            ShowMatchResultNotification(result);
-        }
-    }
-    
-    MatchResult SimulateMatch(MatchFixture fixture)
-    {
-        TeamSaveData homeTeam = SaveSystem.Instance.GetAllTeams()
-            .FirstOrDefault(t => t.TeamId == fixture.HomeTeamId);
-        TeamSaveData awayTeam = SaveSystem.Instance.GetAllTeams()
-            .FirstOrDefault(t => t.TeamId == fixture.AwayTeamId);
-        
-        // Calculate team strengths
-        float homeStrength = homeTeam.Overall + 5; // Home advantage
-        float awayStrength = awayTeam.Overall;
-        
-        // Add randomness
-        homeStrength += Random.Range(-10f, 10f);
-        awayStrength += Random.Range(-10f, 10f);
-        
-        // Simulate goals
-        int homeGoals = SimulateGoals(homeStrength);
-        int awayGoals = SimulateGoals(awayStrength);
-        
-        // Determine result
-        string result = "Draw";
-        if (homeGoals > awayGoals)
-        {
-            result = fixture.HomeTeamId == currentCareer.CurrentTeamId ? "Win" : "Loss";
-        }
-        else if (awayGoals > homeGoals)
-        {
-            result = fixture.AwayTeamId == currentCareer.CurrentTeamId ? "Win" : "Loss";
-        }
-        
-        return new MatchResult
-        {
-            HomeTeamId = fixture.HomeTeamId,
-            AwayTeamId = fixture.AwayTeamId,
-            HomeScore = homeGoals,
-            AwayScore = awayGoals,
-            Date = System.DateTime.Now,
-            Competition = fixture.Competition,
-            Stadium = fixture.Stadium,
-            Attendance = homeTeam.StadiumCapacity - Random.Range(0, homeTeam.StadiumCapacity / 4),
-            Result = result
-        };
-    }
-    
-    int SimulateGoals(float teamStrength)
-    {
-        // Simple goal simulation based on team strength
-        float goalProbability = teamStrength / 100f;
-        int goals = 0;
-        
-        for (int i = 0; i < 10; i++) // 10 attempts
-        {
-            if (Random.Range(0f, 1f) < goalProbability * 0.3f)
-            {
-                goals++;
-            }
-        }
-        
-        return Mathf.Min(goals, 6); // Max 6 goals
-    }
-    
-    void ProcessMatchResult(MatchResult result)
-    {
-        // Update career stats
-        if (result.Result == "Win")
-        {
-            currentCareer.Budget += 2000000; // Win bonus
-            currentCareer.Reputation += 2;
-        }
-        else if (result.Result == "Loss")
-        {
-            currentCareer.Reputation -= 1;
-        }
-        
-        // Advance week
-        currentCareer.Week++;
-        
-        // Check for end of season
-        if (currentCareer.Week > 38)
-        {
-            EndSeason();
-        }
-        
-        SaveSystem.Instance.SaveCareerProgress(currentCareer);
-    }
-    
-    void EndSeason()
-    {
-        // End of season processing
-        currentCareer.Season++;
-        currentCareer.Week = 1;
-        
-        // Award end of season bonuses
-        int finalPosition = CalculateFinalLeaguePosition();
-        currentCareer.LeaguePosition = finalPosition;
-        
-        if (finalPosition == 1)
-        {
-            currentCareer.TrophiesWon++;
-            currentCareer.Budget += 50000000; // League winner bonus
-            currentCareer.Reputation += 10;
-        }
-        else if (finalPosition <= 4)
-        {
-            currentCareer.Budget += 25000000; // Top 4 bonus
-            currentCareer.Reputation += 5;
-        }
-        
-        // Generate new season fixtures
-        GenerateSeasonFixtures();
-        
-        ShowSeasonSummary(finalPosition);
-    }
-    
-    int CalculateFinalLeaguePosition()
-    {
-        // Calculate final league position based on results
-        // This is a simplified calculation
-        int wins = 0;
-        int draws = 0;
-        int losses = 0;
-        
-        foreach (var fixture in fixtures.Where(f => f.IsPlayed))
-        {
-            if (fixture.Result != null)
-            {
-                if (fixture.Result.Result == "Win") wins++;
-                else if (fixture.Result.Result == "Draw") draws++;
-                else losses++;
-            }
-        }
-        
-        int points = wins * 3 + draws;
-        
-        // Simplified position calculation
-        if (points >= 80) return 1;
-        else if (points >= 70) return Random.Range(2, 5);
-        else if (points >= 60) return Random.Range(5, 10);
-        else if (points >= 50) return Random.Range(10, 15);
-        else return Random.Range(15, 20);
-    }
-    
-    void ShowSeasonSummary(int position)
-    {
-        SeasonSummaryManager.Instance.ShowSeasonSummary(currentCareer, position);
-    }
-    
-    void ShowMatchResultNotification(MatchResult result)
-    {
-        string message = $"Match Result: {result.HomeScore}-{result.AwayScore} ({result.Result})";
-        NotificationManager.Instance.ShowNotification(message);
-    }
-    
-    void ShowTransferMarket()
-    {
-        TransferMarketManager transferMarket = FindObjectOfType<TransferMarketManager>();
-        if (transferMarket != null)
-        {
-            transferMarket.ShowTransferMarket(currentCareer);
-        }
-    }
-    
-    void ShowTrainingCenter()
-    {
-        TrainingCenterManager trainingCenter = FindObjectOfType<TrainingCenterManager>();
-        if (trainingCenter != null)
-        {
-            trainingCenter.ShowTrainingCenter(squadPlayers);
-        }
-    }
-    
-    void ShowClubManagement()
-    {
-        ClubManagementManager clubManager = FindObjectOfType<ClubManagementManager>();
-        if (clubManager != null)
-        {
-            clubManager.ShowClubManagement(currentCareer);
-        }
-    }
-    
-    void ShowCalendar()
-    {
-        CalendarManager calendarManager = FindObjectOfType<CalendarManager>();
-        if (calendarManager != null)
-        {
-            calendarManager.ShowCalendar(fixtures);
-        }
-    }
-    
-    void SaveCareer()
-    {
-        if (currentCareer != null)
-        {
-            currentCareer.LastSaved = System.DateTime.Now;
-            SaveSystem.Instance.SaveCareerProgress(currentCareer);
-            ShowNotification("Career saved successfully!");
-        }
-    }
-    
-    void ShowNotification(string message)
-    {
-        NotificationManager.Instance.ShowNotification(message);
-    }
-    
-    string FormatMoney(int amount)
-    {
-        if (amount >= 1000000)
-            return (amount / 1000000f).ToString("F1") + "M";
-        if (amount >= 1000)
-            return (amount / 1000f).ToString("F1") + "K";
-        return amount.ToString();
-    }
-}
 
-[System.Serializable]
-public class MatchFixture
-{
-    public int Week;
-    public int HomeTeamId;
-    public int AwayTeamId;
-    public string Competition;
-    public bool IsPlayed;
-    public string Stadium;
-    public MatchResult Result;
-}
+        public void AdvanceSeason()
+        {
+            if (currentCareer == null) return;
 
-[System.Serializable]
-public class LeagueTable
-{
-    public List<LeagueTableEntry> Entries;
-}
+            currentCareer.currentSeason++;
+            currentCareer.seasonStats = new SeasonStats();
+            currentCareer.objectives = GenerateSeasonObjectives(currentTeam);
+            
+            // Update team based on performance
+            UpdateTeamAfterSeason();
+            
+            SaveCareerData();
+            OnSeasonAdvanced?.Invoke(currentCareer.currentSeason);
+        }
 
-[System.Serializable]
-public class LeagueTableEntry
-{
-    public int TeamId;
-    public string TeamName;
-    public int Played;
-    public int Won;
-    public int Drawn;
-    public int Lost;
-    public int GoalsFor;
-    public int GoalsAgainst;
-    public int GoalDifference;
-    public int Points;
-    public int Position;
+        private void UpdateTeamAfterSeason()
+        {
+            // Update budget based on performance
+            int performanceBonus = CalculatePerformanceBonus();
+            currentCareer.budget += performanceBonus;
+            
+            // Update reputation based on objectives completed
+            int objectivesCompleted = currentCareer.objectives.FindAll(obj => obj.completed).Count;
+            currentCareer.reputation += objectivesCompleted;
+            currentCareer.reputation = Mathf.Clamp(currentCareer.reputation, 1, 10);
+            
+            // Update contract
+            if (DateTime.Now > currentCareer.contractEndDate)
+            {
+                OnContractExpired?.Invoke();
+            }
+        }
+
+        private int CalculatePerformanceBonus()
+        {
+            int bonus = 0;
+            
+            // League position bonus
+            if (currentCareer.seasonStats.leaguePosition <= 4)
+            {
+                bonus += 2000000; // Champions League bonus
+            }
+            else if (currentCareer.seasonStats.leaguePosition <= 6)
+            {
+                bonus += 1000000; // Europa League bonus
+            }
+            
+            // Win ratio bonus
+            float winRatio = (float)currentCareer.seasonStats.wins / currentCareer.seasonStats.matchesPlayed;
+            bonus += (int)(winRatio * 1000000);
+            
+            // Trophies bonus
+            bonus += currentCareer.seasonStats.trophiesWon.Count * 500000;
+            
+            return bonus;
+        }
+
+        private List<ObjectiveData> GenerateSeasonObjectives(TeamData team)
+        {
+            List<ObjectiveData> objectives = new List<ObjectiveData>();
+            
+            // League position objective
+            int targetPosition = GetTargetLeaguePosition(team);
+            objectives.Add(new ObjectiveData
+            {
+                type = "league_position",
+                description = $"Finish in top {targetPosition} of the league",
+                target = targetPosition,
+                reward = 1000000,
+                completed = false,
+                deadline = DateTime.Now.AddMonths(9)
+            });
+            
+            // Cup objective
+            objectives.Add(new ObjectiveData
+            {
+                type = "cup_progress",
+                description = "Reach quarter-finals in domestic cup",
+                target = 8, // Quarter-finals
+                reward = 500000,
+                completed = false,
+                deadline = DateTime.Now.AddMonths(6)
+            });
+            
+            // Youth development objective
+            objectives.Add(new ObjectiveData
+            {
+                type = "youth_development",
+                description = "Promote 2 youth players to first team",
+                target = 2,
+                reward = 300000,
+                completed = false,
+                deadline = DateTime.Now.AddMonths(9)
+            });
+            
+            // Financial objective
+            objectives.Add(new ObjectiveData
+            {
+                type = "financial",
+                description = "Maintain positive transfer balance",
+                target = 0,
+                reward = 200000,
+                completed = false,
+                deadline = DateTime.Now.AddMonths(9)
+            });
+            
+            return objectives;
+        }
+
+        private int GetTargetLeaguePosition(TeamData team)
+        {
+            if (team.prestige >= 9) return 4;
+            if (team.prestige >= 7) return 6;
+            if (team.prestige >= 5) return 10;
+            return 15;
+        }
+
+        public void CompleteObjective(string objectiveType)
+        {
+            if (currentCareer == null) return;
+            
+            ObjectiveData objective = currentCareer.objectives.Find(obj => obj.type == objectiveType);
+            if (objective != null && !objective.completed)
+            {
+                objective.completed = true;
+                currentCareer.budget += objective.reward;
+                SaveCareerData();
+                OnObjectiveCompleted?.Invoke(objective);
+            }
+        }
+
+        public void UpdateSeasonStats(int wins, int draws, int losses, int goalsFor, int goalsAgainst)
+        {
+            if (currentCareer == null) return;
+            
+            currentCareer.seasonStats.wins = wins;
+            currentCareer.seasonStats.draws = draws;
+            currentCareer.seasonStats.losses = losses;
+            currentCareer.seasonStats.goalsFor = goalsFor;
+            currentCareer.seasonStats.goalsAgainst = goalsAgainst;
+            currentCareer.seasonStats.matchesPlayed = wins + draws + losses;
+            currentCareer.seasonStats.points = (wins * 3) + draws;
+            
+            SaveCareerData();
+        }
+
+        public void AddTransfer(TransferData transfer)
+        {
+            if (currentCareer == null) return;
+            
+            currentCareer.transferHistory.Add(transfer);
+            
+            // Update budget
+            if (transfer.transferType == "buy")
+            {
+                currentCareer.budget -= transfer.transferFee;
+            }
+            else if (transfer.transferType == "sell")
+            {
+                currentCareer.budget += transfer.transferFee;
+            }
+            
+            SaveCareerData();
+            OnTransferCompleted?.Invoke(transfer);
+        }
+
+        public void AddTrophy(string trophyName)
+        {
+            if (currentCareer == null) return;
+            
+            currentCareer.seasonStats.trophiesWon.Add(trophyName);
+            SaveCareerData();
+            OnTrophyWon?.Invoke(trophyName);
+        }
+
+        public bool CanAffordPlayer(int transferFee)
+        {
+            return currentCareer != null && currentCareer.budget >= transferFee;
+        }
+
+        public void ChangeTeam(string newTeamId)
+        {
+            if (currentCareer == null) return;
+            
+            TeamData newTeam = teamDatabase.GetTeamById(newTeamId);
+            if (newTeam == null) return;
+            
+            currentCareer.currentTeamId = newTeamId;
+            currentTeam = newTeam;
+            currentCareer.contractEndDate = DateTime.Now.AddYears(2);
+            
+            SaveCareerData();
+            OnTeamChanged?.Invoke(newTeam);
+        }
+
+        public float GetCareerProgress()
+        {
+            if (currentCareer == null) return 0f;
+            return (float)currentCareer.currentSeason / maxSeasonsPerCareer;
+        }
+
+        public int GetTotalTrophies()
+        {
+            if (currentCareer == null) return 0;
+            
+            int totalTrophies = 0;
+            // This would need to be tracked across seasons
+            return totalTrophies;
+        }
+
+        // Events
+        public System.Action<CareerData> OnCareerStarted;
+        public System.Action<int> OnSeasonAdvanced;
+        public System.Action<ObjectiveData> OnObjectiveCompleted;
+        public System.Action<TransferData> OnTransferCompleted;
+        public System.Action<string> OnTrophyWon;
+        public System.Action<TeamData> OnTeamChanged;
+        public System.Action OnContractExpired;
+    }
 }
