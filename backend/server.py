@@ -125,7 +125,7 @@ async def get_team_by_id(team_id: str = FastAPIPath(..., description="Team ID"))
     return team
 
 @api_router.get("/teams/{team_id}/players", response_model=List[Player])
-async def get_team_players(team_id: str = Path(..., description="Team ID")):
+async def get_team_players(team_id: str = FastAPIPath(..., description="Team ID")):
     """Get all players from a team"""
     team = await db_manager.get_team_by_id(team_id)
     if not team:
