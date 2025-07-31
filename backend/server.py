@@ -198,7 +198,7 @@ async def get_match_by_id(match_id: str):
 @api_router.get("/users/{user_id}/matches", response_model=List[Match])
 async def get_user_matches(user_id: str):
     """Get all matches for a user"""
-    return await db_manager.get_user_matches(user_id)
+    return await db_manager.get_matches_by_player(user_id)
 
 @api_router.put("/matches/{match_id}/complete")
 async def complete_match(
