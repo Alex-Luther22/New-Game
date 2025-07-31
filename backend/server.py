@@ -255,7 +255,7 @@ async def get_tournament_by_id(tournament_id: str):
 async def create_career(career: Career):
     """Create a new career"""
     try:
-        career_id = await db_manager.create_career(career.dict())
+        career_id = await db_manager.create_career(career)
         return {"career_id": career_id, "message": "Career created successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
