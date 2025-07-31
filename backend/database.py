@@ -641,39 +641,45 @@ class DatabaseManager:
         """Generate realistic stats based on position"""
         import random
         
-        variation = 5 if is_star else 8
+        def safe_randint(min_val, max_val):
+            """Safely generate random int ensuring min <= max"""
+            min_val = max(1, min_val)
+            max_val = min(99, max_val)
+            if min_val >= max_val:
+                return min_val
+            return random.randint(min_val, max_val)
         
         if position == Position.GOALKEEPER:
             return {
-                "pace": random.randint(35, 55),
-                "shooting": random.randint(15, 35),
-                "passing": random.randint(max(50, base_rating - 15), min(85, base_rating + 5)),
-                "defending": random.randint(max(75, base_rating - 5), min(95, base_rating + 5)),
-                "physicality": random.randint(max(70, base_rating - 10), min(90, base_rating + 5))
+                "pace": safe_randint(35, 55),
+                "shooting": safe_randint(15, 35),
+                "passing": safe_randint(max(50, base_rating - 15), min(85, base_rating + 5)),
+                "defending": safe_randint(max(75, base_rating - 5), min(95, base_rating + 5)),
+                "physicality": safe_randint(max(70, base_rating - 10), min(90, base_rating + 5))
             }
         elif position == Position.DEFENDER:
             return {
-                "pace": random.randint(max(45, base_rating - 20), min(85, base_rating)),
-                "shooting": random.randint(25, 65),
-                "passing": random.randint(max(60, base_rating - 15), min(90, base_rating + 5)),
-                "defending": random.randint(max(70, min(base_rating - 5, 95)), min(95, base_rating + 5)),
-                "physicality": random.randint(max(70, base_rating - 10), min(95, base_rating + 5))
+                "pace": safe_randint(max(45, base_rating - 20), min(85, base_rating)),
+                "shooting": safe_randint(25, 65),
+                "passing": safe_randint(max(60, base_rating - 15), min(90, base_rating + 5)),
+                "defending": safe_randint(max(70, base_rating - 5), min(95, base_rating + 5)),
+                "physicality": safe_randint(max(70, base_rating - 10), min(95, base_rating + 5))
             }
         elif position == Position.MIDFIELDER:
             return {
-                "pace": random.randint(max(55, base_rating - 15), min(85, base_rating + 5)),
-                "shooting": random.randint(max(45, base_rating - 25), min(85, base_rating)),
-                "passing": random.randint(max(70, base_rating - 5), min(95, base_rating + 5)),
-                "defending": random.randint(max(40, base_rating - 25), min(80, base_rating)),
-                "physicality": random.randint(max(55, base_rating - 20), min(85, base_rating))
+                "pace": safe_randint(max(55, base_rating - 15), min(85, base_rating + 5)),
+                "shooting": safe_randint(max(45, base_rating - 25), min(85, base_rating)),
+                "passing": safe_randint(max(70, base_rating - 5), min(95, base_rating + 5)),
+                "defending": safe_randint(max(40, base_rating - 25), min(80, base_rating)),
+                "physicality": safe_randint(max(55, base_rating - 20), min(85, base_rating))
             }
         else:  # FORWARD
             return {
-                "pace": random.randint(max(65, base_rating - 10), min(97, base_rating + 5)),
-                "shooting": random.randint(max(70, base_rating - 5), min(95, base_rating + 5)),
-                "passing": random.randint(max(50, base_rating - 20), min(85, base_rating)),
-                "defending": random.randint(25, 55),
-                "physicality": random.randint(max(55, base_rating - 20), min(85, base_rating))
+                "pace": safe_randint(max(65, base_rating - 10), min(97, base_rating + 5)),
+                "shooting": safe_randint(max(70, base_rating - 5), min(95, base_rating + 5)),
+                "passing": safe_randint(max(50, base_rating - 20), min(85, base_rating)),
+                "defending": safe_randint(25, 55),
+                "physicality": safe_randint(max(55, base_rating - 20), min(85, base_rating))
             }
     
     def calculate_player_value(self, overall_rating: int, position: Position, age: int) -> int:
