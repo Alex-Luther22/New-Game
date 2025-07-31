@@ -566,6 +566,10 @@ class DatabaseManager:
                 {"name": "Luis Diaz", "position": Position.FORWARD, "overall_rating": 84, "pace": 88, "shooting": 78, "passing": 76, "defending": 39, "physicality": 70, "age": 27, "nationality": "Colombia", "value": 65000000, "stamina": 87, "skill_moves": 4, "weak_foot": 3, "special_abilities": ["pace_merchant", "south_american_flair", "wing_wizard"]},
                 {"name": "Cody Gakpo", "position": Position.FORWARD, "overall_rating": 81, "pace": 82, "shooting": 80, "passing": 78, "defending": 35, "physicality": 73, "age": 25, "nationality": "Netherlands", "value": 50000000, "stamina": 85, "skill_moves": 4, "weak_foot": 4, "special_abilities": ["versatile_forward", "dutch_technique", "aerial_threat"]}
             ]
+        
+        # Default template for other teams (will generate based on team rating)
+        else:
+            return self.generate_default_players(team_name, team_rating)
     
     def generate_default_players(self, team_name: str, team_rating: int) -> list:
         """Generate default players when specific templates aren't available"""
