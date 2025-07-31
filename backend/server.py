@@ -166,7 +166,7 @@ async def get_countries():
 @api_router.get("/stadiums", response_model=List[Stadium])
 async def get_all_stadiums():
     """Get all stadiums"""
-    return await db_manager.get_all_stadiums()
+    return await db_manager.get_stadiums()
 
 @api_router.get("/stadiums/{stadium_id}", response_model=Stadium)
 async def get_stadium_by_id(stadium_id: str):
