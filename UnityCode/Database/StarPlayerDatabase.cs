@@ -267,11 +267,11 @@ namespace FootballMaster.PlayerSystem
 
         private void InitializeStarPlayers()
         {
-            // Kylian Mbappe inspired (Lightning Striker)
+            // Lightning Striker (Mbappe inspired)
             starPlayers.Add(new StarPlayerTemplate
             {
                 playerId = "lightning_striker_01",
-                playerName = "Kylian Mbappe",
+                playerName = "Kyle Morrison",
                 realWorldInspiration = "Based on Kylian Mbappe's playstyle",
                 overallRating = 91,
                 position = Position.Forward,
@@ -289,11 +289,11 @@ namespace FootballMaster.PlayerSystem
                 }
             });
 
-            // Vinicius Jr inspired (Brazilian Magician)
+            // Brazilian Magician (Vinicius Jr inspired)
             starPlayers.Add(new StarPlayerTemplate
             {
                 playerId = "brazilian_magician_01",
-                playerName = "Vinicius Junior",
+                playerName = "Victor Santos",
                 realWorldInspiration = "Based on Vinicius Jr's playstyle",
                 overallRating = 89,
                 position = Position.Forward,
@@ -311,11 +311,11 @@ namespace FootballMaster.PlayerSystem
                 }
             });
 
-            // Kevin De Bruyne inspired (Midfield Maestro)
+            // Midfield Maestro (Kevin De Bruyne inspired)
             starPlayers.Add(new StarPlayerTemplate
             {
                 playerId = "midfield_maestro_01",
-                playerName = "Kevin De Bruyne",
+                playerName = "Karl De Berg",
                 realWorldInspiration = "Based on Kevin De Bruyne's playstyle",
                 overallRating = 91,
                 position = Position.Midfielder,
@@ -333,11 +333,11 @@ namespace FootballMaster.PlayerSystem
                 }
             });
 
-            // Erling Haaland inspired (Goal Machine)
+            // Goal Machine (Erling Haaland inspired)
             starPlayers.Add(new StarPlayerTemplate
             {
                 playerId = "goal_machine_01",
-                playerName = "Erling Haaland",
+                playerName = "Erik Halberg",
                 realWorldInspiration = "Based on Erling Haaland's playstyle",
                 overallRating = 91,
                 position = Position.Forward,
@@ -355,11 +355,11 @@ namespace FootballMaster.PlayerSystem
                 }
             });
 
-            // Jude Bellingham inspired (Young Phenomenon)
+            // Young Phenomenon (Jude Bellingham inspired)
             starPlayers.Add(new StarPlayerTemplate
             {
                 playerId = "young_phenomenon_01",
-                playerName = "Jude Bellingham",
+                playerName = "Jake Bellmont",
                 realWorldInspiration = "Based on Jude Bellingham's playstyle",
                 overallRating = 87,
                 position = Position.Midfielder,
@@ -383,11 +383,11 @@ namespace FootballMaster.PlayerSystem
 
         private void InitializeMoreStarPlayers()
         {
-            // Luka Modric inspired (Timeless Maestro)
+            // Timeless Maestro (Luka Modric inspired)
             starPlayers.Add(new StarPlayerTemplate
             {
                 playerId = "timeless_maestro_01",
-                playerName = "Luka Modric",
+                playerName = "Lucas Modric",
                 realWorldInspiration = "Based on Luka Modric's playstyle",
                 overallRating = 88,
                 position = Position.Midfielder,
@@ -405,11 +405,11 @@ namespace FootballMaster.PlayerSystem
                 }
             });
 
-            // Virgil van Dijk inspired (Defensive Colossus)
+            // Defensive Colossus (Virgil van Dijk inspired)
             starPlayers.Add(new StarPlayerTemplate
             {
                 playerId = "defensive_colossus_01",
-                playerName = "Virgil van Dijk",
+                playerName = "Vincent van Berg",
                 realWorldInspiration = "Based on Virgil van Dijk's playstyle",
                 overallRating = 89,
                 position = Position.Defender,
@@ -427,11 +427,11 @@ namespace FootballMaster.PlayerSystem
                 }
             });
 
-            // Pedri inspired (Young Virtuoso)
+            // Young Virtuoso (Pedri inspired)
             starPlayers.Add(new StarPlayerTemplate
             {
                 playerId = "young_virtuoso_01",
-                playerName = "Pedri Gonzalez",
+                playerName = "Pablo Gonzales",
                 realWorldInspiration = "Based on Pedri's playstyle",
                 overallRating = 85,
                 position = Position.Midfielder,
@@ -446,6 +446,50 @@ namespace FootballMaster.PlayerSystem
                     GetAbilityById("vision_master"),
                     GetAbilityById("elastico_master"),
                     GetAbilityById("curve_master")
+                }
+            });
+
+            // Polish Striker (Lewandowski inspired)
+            starPlayers.Add(new StarPlayerTemplate
+            {
+                playerId = "polish_striker_01",
+                playerName = "Robert Lewanski",
+                realWorldInspiration = "Based on Robert Lewandowski's playstyle",
+                overallRating = 90,
+                position = Position.Forward,
+                nationality = "Poland",
+                preferredPlayStyle = PlayStyle.TargetMan,
+                signatureTricks = new List<TrickType> { TrickType.FakeShot, TrickType.BodyFeint, TrickType.Chop },
+                freeKickAccuracy = 0.88f,
+                penaltyAccuracy = 0.95f,
+                isLeftFooted = false,
+                specialAbilities = new List<SpecialAbility>
+                {
+                    GetAbilityById("rocket_shot"),
+                    GetAbilityById("aerial_dominance"),
+                    GetAbilityById("penalty_master")
+                }
+            });
+
+            // Egyptian Pharaoh (Salah inspired)
+            starPlayers.Add(new StarPlayerTemplate
+            {
+                playerId = "egyptian_pharaoh_01",
+                playerName = "Mohamed Saladin",
+                realWorldInspiration = "Based on Mohamed Salah's playstyle",
+                overallRating = 90,
+                position = Position.Forward,
+                nationality = "Egypt",
+                preferredPlayStyle = PlayStyle.SpeedMerchant,
+                signatureTricks = new List<TrickType> { TrickType.CutInside, TrickType.FakeShot, TrickType.StepOverLeft },
+                freeKickAccuracy = 0.85f,
+                penaltyAccuracy = 0.92f,
+                isLeftFooted = true,
+                specialAbilities = new List<SpecialAbility>
+                {
+                    GetAbilityById("lightning_pace"),
+                    GetAbilityById("curve_master"),
+                    GetAbilityById("penalty_master")
                 }
             });
         }

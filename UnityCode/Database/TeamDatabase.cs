@@ -175,7 +175,7 @@ namespace FootballMaster.Database
                 formation = Formation.F_4_3_3,
                 primaryColor = Color.white,
                 secondaryColor = new Color(1f, 0.84f, 0f),
-                stadiumName = "Santiago Bernabéu",
+                stadiumName = "Royal Bernabeu Arena",
                 stadiumCapacity = 81000,
                 budget = 300000000,
                 prestige = 10,
@@ -197,7 +197,7 @@ namespace FootballMaster.Database
                 formation = Formation.F_4_3_3,
                 primaryColor = new Color(0.65f, 0f, 0.27f),
                 secondaryColor = new Color(0f, 0.3f, 0.6f),
-                stadiumName = "Camp Nou",
+                stadiumName = "Camp Majesty",
                 stadiumCapacity = 99000,
                 budget = 280000000,
                 prestige = 10,
@@ -250,8 +250,8 @@ namespace FootballMaster.Database
 
             stadiums.Add(new StadiumData
             {
-                id = "camp_nou",
-                name = "Camp Nou",
+                id = "camp_majesty",
+                name = "Camp Majesty",
                 capacity = 99000,
                 country = "Spain",
                 city = "Barcelona",
@@ -259,14 +259,29 @@ namespace FootballMaster.Database
                 roofType = "open",
                 atmosphereRating = 10,
                 weatherConditions = new List<string> { "sunny", "windy" },
-                uniqueFeatures = new List<string> { "massive_capacity", "iconic_architecture" },
+                uniqueFeatures = new List<string> { "massive_capacity", "iconic_architecture", "azure_exterior" },
                 createdAt = DateTime.Now
             });
 
             stadiums.Add(new StadiumData
             {
-                id = "allianz_arena",
-                name = "Allianz Arena",
+                id = "royal_bernabeu_arena",
+                name = "Royal Bernabeu Arena",
+                capacity = 81000,
+                country = "Spain",
+                city = "Madrid",
+                surfaceType = "natural_grass",
+                roofType = "retractable",
+                atmosphereRating = 10,
+                weatherConditions = new List<string> { "sunny", "windy", "hot" },
+                uniqueFeatures = new List<string> { "retractable_roof", "royal_white_exterior", "historic_prestige" },
+                createdAt = DateTime.Now
+            });
+
+            stadiums.Add(new StadiumData
+            {
+                id = "allianz_fortress",
+                name = "Allianz Fortress",
                 capacity = 75000,
                 country = "Germany",
                 city = "Munich",
@@ -274,7 +289,97 @@ namespace FootballMaster.Database
                 roofType = "closed",
                 atmosphereRating = 9,
                 weatherConditions = new List<string> { "cold", "snow", "sunny" },
-                uniqueFeatures = new List<string> { "color_changing_exterior", "modern_design" },
+                uniqueFeatures = new List<string> { "color_changing_exterior", "modern_design", "bavarian_atmosphere" },
+                createdAt = DateTime.Now
+            });
+
+            stadiums.Add(new StadiumData
+            {
+                id = "anfield_fortress",
+                name = "Anfield Fortress",
+                capacity = 54000,
+                country = "England",
+                city = "Liverpool",
+                surfaceType = "natural_grass",
+                roofType = "open",
+                atmosphereRating = 10,
+                weatherConditions = new List<string> { "rainy", "cloudy", "windy" },
+                uniqueFeatures = new List<string> { "kop_stand", "you_never_walk_alone", "electric_atmosphere" },
+                createdAt = DateTime.Now
+            });
+
+            stadiums.Add(new StadiumData
+            {
+                id = "san_siro_cathedral",
+                name = "San Siro Cathedral",
+                capacity = 80000,
+                country = "Italy",
+                city = "Milan",
+                surfaceType = "natural_grass",
+                roofType = "open",
+                atmosphereRating = 9,
+                weatherConditions = new List<string> { "sunny", "rainy", "foggy" },
+                uniqueFeatures = new List<string> { "spiral_towers", "historic_architecture", "dual_heritage" },
+                createdAt = DateTime.Now
+            });
+
+            stadiums.Add(new StadiumData
+            {
+                id = "parc_princes",
+                name = "Parc des Princes",
+                capacity = 48000,
+                country = "France",
+                city = "Paris",
+                surfaceType = "natural_grass",
+                roofType = "open",
+                atmosphereRating = 8,
+                weatherConditions = new List<string> { "sunny", "rainy", "windy" },
+                uniqueFeatures = new List<string> { "parisian_elegance", "steep_stands", "modern_facilities" },
+                createdAt = DateTime.Now
+            });
+
+            stadiums.Add(new StadiumData
+            {
+                id = "maracana_temple",
+                name = "Maracanã Temple",
+                capacity = 78000,
+                country = "Brazil",
+                city = "Rio de Janeiro",
+                surfaceType = "natural_grass",
+                roofType = "open",
+                atmosphereRating = 10,
+                weatherConditions = new List<string> { "hot", "humid", "sunny" },
+                uniqueFeatures = new List<string> { "samba_atmosphere", "world_cup_legacy", "brazilian_passion" },
+                createdAt = DateTime.Now
+            });
+
+            stadiums.Add(new StadiumData
+            {
+                id = "bombonera_cauldron",
+                name = "La Bombonera Cauldron",
+                capacity = 49000,
+                country = "Argentina",
+                city = "Buenos Aires",
+                surfaceType = "natural_grass",
+                roofType = "open",
+                atmosphereRating = 10,
+                weatherConditions = new List<string> { "sunny", "windy", "hot" },
+                uniqueFeatures = new List<string> { "intimidating_atmosphere", "steep_stands", "argentine_passion" },
+                createdAt = DateTime.Now
+            });
+
+            stadiums.Add(new StadiumData
+            {
+                id = "signal_iduna_wall",
+                name = "Signal Iduna Wall",
+                capacity = 81000,
+                country = "Germany",
+                city = "Dortmund",
+                surfaceType = "natural_grass",
+                roofType = "open",
+                atmosphereRating = 10,
+                weatherConditions = new List<string> { "cold", "rainy", "snow" },
+                uniqueFeatures = new List<string> { "yellow_wall", "standing_section", "thunderous_atmosphere" },
                 createdAt = DateTime.Now
             });
         }
@@ -335,13 +440,25 @@ namespace FootballMaster.Database
             switch (position)
             {
                 case Position.Goalkeeper:
-                    return goalkeeperNames.Count > 0 ? goalkeeperNames : new List<string> { "Martinez", "Silva", "Johnson", "Mueller" };
+                    return goalkeeperNames.Count > 0 ? goalkeeperNames : new List<string> { 
+                        "Alessandro Martinez", "Diego Silva", "Marcus Johnson", "Thomas Mueller",
+                        "Gabriel Santos", "Roberto Fernandez", "Andre Costa", "Miguel Torres"
+                    };
                 case Position.Defender:
-                    return defenderNames.Count > 0 ? defenderNames : new List<string> { "Smith", "Jones", "Williams", "Davis" };
+                    return defenderNames.Count > 0 ? defenderNames : new List<string> { 
+                        "Carlos Smith", "Antonio Jones", "Fernando Williams", "Pedro Davis",
+                        "Ricardo Lopez", "Manuel Garcia", "Diego Rodriguez", "Luis Hernandez"
+                    };
                 case Position.Midfielder:
-                    return midfielderNames.Count > 0 ? midfielderNames : new List<string> { "Robinson", "Walker", "Young", "Allen" };
+                    return midfielderNames.Count > 0 ? midfielderNames : new List<string> { 
+                        "Marco Robinson", "David Walker", "Alex Young", "Bruno Allen",
+                        "Paulo Mitchell", "Sergio Perez", "Rafael Castro", "Gabriel Morales"
+                    };
                 case Position.Forward:
-                    return forwardNames.Count > 0 ? forwardNames : new List<string> { "Roberts", "Carter", "Mitchell", "Perez" };
+                    return forwardNames.Count > 0 ? forwardNames : new List<string> { 
+                        "Leonardo Roberts", "Diego Carter", "Carlos Mitchell", "Antonio Perez",
+                        "Fernando Silva", "Miguel Santos", "Rafael Torres", "Gabriel Lopez"
+                    };
                 default:
                     return new List<string> { "Player" };
             }
