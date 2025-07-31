@@ -937,7 +937,65 @@ class FootballMasterTester:
         details = f"Status: {status}, Uniform created: {'Yes' if passed else 'No'}"
         self.log_test("Create Team Uniform", passed, details, response_time)
     
-    # ============ PERFORMANCE TESTS ============
+    async def test_copyright_compliance(self):
+        """Test that all names are fictional and no copyright issues exist"""
+        copyright_violations = []
+        
+        # Test teams data
+        if self.teams_data:
+            for team in self.teams_data:
+                team_name = team.get('name', '')
+                
+                # Check for real team names that should be fictional
+                real_team_patterns = ['Real Madrid', 'FC Barcelona', 'Manchester City', 'Manchester United', 'Chelsea', 'Arsenal', 'Tottenham', 'Liverpool FC']
+                for pattern in real_team_patterns:
+                    if pattern.lower() in team_name.lower() and team_name not in ['Madrid White', 'Barcelona FC', 'Manchester Blue', 'Manchester Red', 'London Blue', 'London Red', 'North London', 'Liverpool Red']:
+                        copyright_violations.append(f"Team name too similar to real: {team_name}")
+                
+                # Check players in team
+                for player in team.get('players', []):
+                    player_name = player.get('name', '')
+                    
+                    # List of real player names that should NOT exist
+                    forbidden_player_names = [
+                        'Kylian Mbappe', 'Erling Haaland', 'Lionel Messi', 'Cristiano Ronaldo',
+                        'Kevin De Bruyne', 'Mohamed Salah', 'Virgil van Dijk', 'Robert Lewandowski',
+                        'Neymar', 'Karim Benzema', 'Luka Modric', 'Pedri', 'Gavi', 'Vinicius Junior',
+                        'Sadio Mane', 'Darwin Nunez', 'Luis Diaz', 'Cody Gakpo', 'Diogo Jota'
+                    ]
+                    
+                    for forbidden in forbidden_player_names:
+                        if forbidden.lower() == player_name.lower():
+                            copyright_violations.append(f"Real player name found: {player_name}")
+        
+        # Test stadiums data
+        if self.stadiums_data:
+            for stadium in self.stadiums_data:
+                stadium_name = stadium.get('name', '')
+                
+                # List of real stadium names that should NOT exist
+                forbidden_stadium_names = [
+                    'Santiago Bernabéu', 'Camp Nou', 'Old Trafford', 'Anfield', 'Stamford Bridge',
+                    'Emirates Stadium', 'Etihad Stadium', 'Allianz Arena', 'San Siro', 'Wembley'
+                ]
+                
+                for forbidden in forbidden_stadium_names:
+                    if forbidden.lower() == stadium_name.lower():
+                        copyright_violations.append(f"Real stadium name found: {stadium_name}")
+        
+        passed = len(copyright_violations) == 0
+        
+        if not passed:
+            for violation in copyright_violations:
+                self.log_critical_issue(f"Copyright violation: {violation}")
+        
+        details = f"Copyright violations found: {len(copyright_violations)}"
+        self.log_test("Copyright Compliance Check", passed, details, 0)
+        
+        if passed:
+            print("    ✅ All names are fictional - no copyright issues detected")
+        else:
+            print(f"    ❌ Found {len(copyright_violations)} copyright violations")
     
     async def test_performance_large_dataset(self):
         """Test performance with large dataset requests"""
