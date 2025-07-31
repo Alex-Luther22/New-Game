@@ -227,7 +227,7 @@ async def complete_match(
 async def create_tournament(tournament: Tournament):
     """Create a new tournament"""
     try:
-        tournament_id = await db_manager.create_tournament(tournament.dict())
+        tournament_id = await db_manager.create_tournament(tournament)
         return {"tournament_id": tournament_id, "message": "Tournament created successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
