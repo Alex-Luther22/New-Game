@@ -119,7 +119,7 @@ async def get_all_teams(
 @api_router.get("/teams/{team_id}", response_model=Team)
 async def get_team_by_id(team_id: str = FastAPIPath(..., description="Team ID")):
     """Get team by ID"""
-    team = await db_manager.get_team_by_id(team_id)
+    team = await db_manager.get_team(team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
     return team
