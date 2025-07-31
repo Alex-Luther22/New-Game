@@ -285,7 +285,7 @@ async def advance_career_season(career_id: str):
 @api_router.get("/achievements", response_model=List[Achievement])
 async def get_all_achievements():
     """Get all achievements"""
-    return await db_manager.get_all_achievements()
+    return await db_manager.get_achievements()
 
 @api_router.get("/users/{user_id}/achievements")
 async def get_user_achievements(user_id: str):
