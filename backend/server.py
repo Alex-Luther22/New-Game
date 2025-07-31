@@ -69,7 +69,7 @@ async def health_check():
 async def create_user_profile(profile: UserProfile):
     """Create a new user profile"""
     try:
-        user_id = await db_manager.create_user_profile(profile.dict())
+        user_id = await db_manager.create_user_profile(profile)
         return {"user_id": user_id, "message": "User created successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
