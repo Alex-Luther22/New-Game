@@ -155,6 +155,224 @@ class DatabaseManager:
                 "overall_rating": 81, "attack_rating": 83, "midfield_rating": 80, "defense_rating": 79,
                 "primary_color": "#1E3A8A", "secondary_color": "#FFD700", "stadium_name": "La Bombonera",
                 "stadium_capacity": 54000, "budget": 30000000, "prestige": 7
+            },
+            
+            # More Premier League Teams
+            {
+                "name": "Brighton FC", "short_name": "BHA", "country": "England", "league": "Premier League",
+                "overall_rating": 78, "attack_rating": 76, "midfield_rating": 79, "defense_rating": 79,
+                "primary_color": "#0057B8", "secondary_color": "#FFCD00", "stadium_name": "American Express Community Stadium",
+                "stadium_capacity": 31800, "budget": 45000000, "prestige": 6
+            },
+            {
+                "name": "Newcastle United", "short_name": "NEW", "country": "England", "league": "Premier League",
+                "overall_rating": 82, "attack_rating": 80, "midfield_rating": 83, "defense_rating": 83,
+                "primary_color": "#000000", "secondary_color": "#FFFFFF", "stadium_name": "St. James' Park",
+                "stadium_capacity": 52000, "budget": 120000000, "prestige": 7
+            },
+            {
+                "name": "Aston Villa", "short_name": "AVL", "country": "England", "league": "Premier League",
+                "overall_rating": 80, "attack_rating": 82, "midfield_rating": 79, "defense_rating": 78,
+                "primary_color": "#7A003C", "secondary_color": "#95BFE5", "stadium_name": "Villa Park",
+                "stadium_capacity": 42682, "budget": 65000000, "prestige": 7
+            },
+            {
+                "name": "West Ham United", "short_name": "WHU", "country": "England", "league": "Premier League",
+                "overall_rating": 77, "attack_rating": 75, "midfield_rating": 78, "defense_rating": 78,
+                "primary_color": "#7A263A", "secondary_color": "#1BB1E7", "stadium_name": "London Stadium",
+                "stadium_capacity": 66000, "budget": 55000000, "prestige": 6
+            },
+            
+            # More La Liga Teams
+            {
+                "name": "Villarreal CF", "short_name": "VIL", "country": "Spain", "league": "La Liga",
+                "overall_rating": 81, "attack_rating": 80, "midfield_rating": 82, "defense_rating": 80,
+                "primary_color": "#FFFF00", "secondary_color": "#005BA6", "stadium_name": "Estadio de la Cerámica",
+                "stadium_capacity": 23500, "budget": 70000000, "prestige": 7
+            },
+            {
+                "name": "Real Sociedad", "short_name": "RSO", "country": "Spain", "league": "La Liga",
+                "overall_rating": 79, "attack_rating": 78, "midfield_rating": 81, "defense_rating": 78,
+                "primary_color": "#004C99", "secondary_color": "#FFFFFF", "stadium_name": "Reale Arena",
+                "stadium_capacity": 39500, "budget": 50000000, "prestige": 6
+            },
+            {
+                "name": "Real Betis", "short_name": "BET", "country": "Spain", "league": "La Liga",
+                "overall_rating": 78, "attack_rating": 80, "midfield_rating": 77, "defense_rating": 76,
+                "primary_color": "#00954C", "secondary_color": "#FFFFFF", "stadium_name": "Benito Villamarín",
+                "stadium_capacity": 60720, "budget": 45000000, "prestige": 6
+            },
+            {
+                "name": "Athletic Club", "short_name": "ATH", "country": "Spain", "league": "La Liga",
+                "overall_rating": 79, "attack_rating": 77, "midfield_rating": 80, "defense_rating": 80,
+                "primary_color": "#EE2523", "secondary_color": "#FFFFFF", "stadium_name": "San Mamés",
+                "stadium_capacity": 53289, "budget": 40000000, "prestige": 7
+            },
+            
+            # More Bundesliga Teams  
+            {
+                "name": "RB Leipzig", "short_name": "RBL", "country": "Germany", "league": "Bundesliga",
+                "overall_rating": 83, "attack_rating": 85, "midfield_rating": 82, "defense_rating": 81,
+                "primary_color": "#DC143C", "secondary_color": "#FFFFFF", "stadium_name": "Red Bull Arena",
+                "stadium_capacity": 47069, "budget": 85000000, "prestige": 7
+            },
+            {
+                "name": "Bayer Leverkusen", "short_name": "B04", "country": "Germany", "league": "Bundesliga",
+                "overall_rating": 84, "attack_rating": 86, "midfield_rating": 83, "defense_rating": 82,
+                "primary_color": "#E32221", "secondary_color": "#000000", "stadium_name": "BayArena",
+                "stadium_capacity": 30210, "budget": 90000000, "prestige": 7
+            },
+            {
+                "name": "Eintracht Frankfurt", "short_name": "SGE", "country": "Germany", "league": "Bundesliga",
+                "overall_rating": 80, "attack_rating": 82, "midfield_rating": 79, "defense_rating": 78,
+                "primary_color": "#E1000F", "secondary_color": "#000000", "stadium_name": "Deutsche Bank Park",
+                "stadium_capacity": 51500, "budget": 60000000, "prestige": 6
+            },
+            
+            # More Serie A Teams
+            {
+                "name": "AS Roma", "short_name": "ROM", "country": "Italy", "league": "Serie A",
+                "overall_rating": 82, "attack_rating": 84, "midfield_rating": 81, "defense_rating": 80,
+                "primary_color": "#CC0000", "secondary_color": "#FCDD09", "stadium_name": "Stadio Olimpico",
+                "stadium_capacity": 70634, "budget": 85000000, "prestige": 8
+            },
+            {
+                "name": "SS Lazio", "short_name": "LAZ", "country": "Italy", "league": "Serie A",
+                "overall_rating": 81, "attack_rating": 83, "midfield_rating": 80, "defense_rating": 79,
+                "primary_color": "#87CEEB", "secondary_color": "#FFFFFF", "stadium_name": "Stadio Olimpico",
+                "stadium_capacity": 70634, "budget": 75000000, "prestige": 7
+            },
+            {
+                "name": "SSC Napoli", "short_name": "NAP", "country": "Italy", "league": "Serie A",
+                "overall_rating": 85, "attack_rating": 87, "midfield_rating": 84, "defense_rating": 83,
+                "primary_color": "#0B7EC8", "secondary_color": "#FFFFFF", "stadium_name": "Stadio Diego Armando Maradona",
+                "stadium_capacity": 54726, "budget": 95000000, "prestige": 8
+            },
+            {
+                "name": "Atalanta BC", "short_name": "ATA", "country": "Italy", "league": "Serie A",
+                "overall_rating": 81, "attack_rating": 84, "midfield_rating": 79, "defense_rating": 78,
+                "primary_color": "#1E90FF", "secondary_color": "#000000", "stadium_name": "Gewiss Stadium",
+                "stadium_capacity": 21747, "budget": 65000000, "prestige": 7
+            },
+            
+            # More Ligue 1 Teams
+            {
+                "name": "AS Monaco", "short_name": "MON", "country": "France", "league": "Ligue 1",
+                "overall_rating": 80, "attack_rating": 82, "midfield_rating": 79, "defense_rating": 78,
+                "primary_color": "#FF0000", "secondary_color": "#FFFFFF", "stadium_name": "Stade Louis II",
+                "stadium_capacity": 18523, "budget": 70000000, "prestige": 7
+            },
+            {
+                "name": "Olympique Lyon", "short_name": "OLY", "country": "France", "league": "Ligue 1",
+                "overall_rating": 79, "attack_rating": 81, "midfield_rating": 78, "defense_rating": 77,
+                "primary_color": "#0066CC", "secondary_color": "#FFFFFF", "stadium_name": "Groupama Stadium",
+                "stadium_capacity": 59186, "budget": 65000000, "prestige": 7
+            },
+            {
+                "name": "OGC Nice", "short_name": "NIC", "country": "France", "league": "Ligue 1",
+                "overall_rating": 76, "attack_rating": 75, "midfield_rating": 77, "defense_rating": 76,
+                "primary_color": "#FF0000", "secondary_color": "#000000", "stadium_name": "Allianz Riviera",
+                "stadium_capacity": 35624, "budget": 45000000, "prestige": 6
+            },
+            
+            # Eredivisie Teams
+            {
+                "name": "Ajax Amsterdam", "short_name": "AJA", "country": "Netherlands", "league": "Eredivisie",
+                "overall_rating": 82, "attack_rating": 84, "midfield_rating": 81, "defense_rating": 80,
+                "primary_color": "#FF0000", "secondary_color": "#FFFFFF", "stadium_name": "Johan Cruyff Arena",
+                "stadium_capacity": 54990, "budget": 60000000, "prestige": 8
+            },
+            {
+                "name": "PSV Eindhoven", "short_name": "PSV", "country": "Netherlands", "league": "Eredivisie",
+                "overall_rating": 81, "attack_rating": 83, "midfield_rating": 80, "defense_rating": 79,
+                "primary_color": "#FF0000", "secondary_color": "#FFFFFF", "stadium_name": "Philips Stadion",
+                "stadium_capacity": 35000, "budget": 55000000, "prestige": 7
+            },
+            {
+                "name": "Feyenoord Rotterdam", "short_name": "FEY", "country": "Netherlands", "league": "Eredivisie",
+                "overall_rating": 80, "attack_rating": 82, "midfield_rating": 79, "defense_rating": 78,
+                "primary_color": "#FF0000", "secondary_color": "#FFFFFF", "stadium_name": "De Kuip",
+                "stadium_capacity": 51177, "budget": 50000000, "prestige": 7
+            },
+            
+            # Liga Portuguesa
+            {
+                "name": "FC Porto", "short_name": "POR", "country": "Portugal", "league": "Primeira Liga",
+                "overall_rating": 82, "attack_rating": 84, "midfield_rating": 81, "defense_rating": 80,
+                "primary_color": "#004C99", "secondary_color": "#FFFFFF", "stadium_name": "Estádio do Dragão",
+                "stadium_capacity": 50033, "budget": 55000000, "prestige": 8
+            },
+            {
+                "name": "SL Benfica", "short_name": "BEN", "country": "Portugal", "league": "Primeira Liga",
+                "overall_rating": 83, "attack_rating": 85, "midfield_rating": 82, "defense_rating": 81,
+                "primary_color": "#FF0000", "secondary_color": "#FFFFFF", "stadium_name": "Estádio da Luz",
+                "stadium_capacity": 64642, "budget": 60000000, "prestige": 8
+            },
+            {
+                "name": "Sporting CP", "short_name": "SCP", "country": "Portugal", "league": "Primeira Liga",
+                "overall_rating": 81, "attack_rating": 83, "midfield_rating": 80, "defense_rating": 79,
+                "primary_color": "#00B04F", "secondary_color": "#FFFFFF", "stadium_name": "Estádio José Alvalade",
+                "stadium_capacity": 50095, "budget": 50000000, "prestige": 7
+            },
+            
+            # Turkish Super Lig  
+            {
+                "name": "Galatasaray SK", "short_name": "GAL", "country": "Turkey", "league": "Süper Lig",
+                "overall_rating": 79, "attack_rating": 81, "midfield_rating": 78, "defense_rating": 77,
+                "primary_color": "#FF8000", "secondary_color": "#8B0000", "stadium_name": "Türk Telekom Stadium",
+                "stadium_capacity": 52695, "budget": 35000000, "prestige": 7
+            },
+            {
+                "name": "Fenerbahçe SK", "short_name": "FEN", "country": "Turkey", "league": "Süper Lig",
+                "overall_rating": 78, "attack_rating": 80, "midfield_rating": 77, "defense_rating": 76,
+                "primary_color": "#FFFF00", "secondary_color": "#000080", "stadium_name": "Şükrü Saracoğlu Stadium",
+                "stadium_capacity": 50509, "budget": 40000000, "prestige": 7
+            },
+            {
+                "name": "Beşiktaş JK", "short_name": "BES", "country": "Turkey", "league": "Süper Lig",
+                "overall_rating": 77, "attack_rating": 79, "midfield_rating": 76, "defense_rating": 75,
+                "primary_color": "#000000", "secondary_color": "#FFFFFF", "stadium_name": "Vodafone Park",
+                "stadium_capacity": 41903, "budget": 30000000, "prestige": 6
+            },
+            
+            # MLS Teams
+            {
+                "name": "Inter Miami CF", "short_name": "MIA", "country": "USA", "league": "MLS",
+                "overall_rating": 76, "attack_rating": 79, "midfield_rating": 74, "defense_rating": 73,
+                "primary_color": "#FF69B4", "secondary_color": "#000000", "stadium_name": "DRV PNK Stadium",
+                "stadium_capacity": 18000, "budget": 25000000, "prestige": 6
+            },
+            {
+                "name": "LA Galaxy", "short_name": "LAG", "country": "USA", "league": "MLS",
+                "overall_rating": 75, "attack_rating": 77, "midfield_rating": 74, "defense_rating": 73,
+                "primary_color": "#FFFFFF", "secondary_color": "#1E3A8A", "stadium_name": "Dignity Health Sports Park",
+                "stadium_capacity": 27000, "budget": 22000000, "prestige": 6
+            },
+            {
+                "name": "Atlanta United FC", "short_name": "ATL", "country": "USA", "league": "MLS",
+                "overall_rating": 76, "attack_rating": 78, "midfield_rating": 75, "defense_rating": 74,
+                "primary_color": "#8B0000", "secondary_color": "#000000", "stadium_name": "Mercedes-Benz Stadium",
+                "stadium_capacity": 71000, "budget": 20000000, "prestige": 6
+            },
+            
+            # More Brazilian Teams
+            {
+                "name": "Palmeiras", "short_name": "PAL", "country": "Brazil", "league": "Brasileirão",
+                "overall_rating": 83, "attack_rating": 85, "midfield_rating": 82, "defense_rating": 81,
+                "primary_color": "#00B04F", "secondary_color": "#FFFFFF", "stadium_name": "Allianz Parque",
+                "stadium_capacity": 43713, "budget": 45000000, "prestige": 8
+            },
+            {
+                "name": "Corinthians", "short_name": "COR", "country": "Brazil", "league": "Brasileirão",
+                "overall_rating": 81, "attack_rating": 83, "midfield_rating": 80, "defense_rating": 79,
+                "primary_color": "#FFFFFF", "secondary_color": "#000000", "stadium_name": "Neo Química Arena",
+                "stadium_capacity": 49205, "budget": 35000000, "prestige": 8
+            },
+            {
+                "name": "São Paulo FC", "short_name": "SAO", "country": "Brazil", "league": "Brasileirão",
+                "overall_rating": 80, "attack_rating": 82, "midfield_rating": 79, "defense_rating": 78,
+                "primary_color": "#FF0000", "secondary_color": "#000000", "stadium_name": "Morumbi",
+                "stadium_capacity": 67052, "budget": 32000000, "prestige": 8
             }
         ]
         
