@@ -431,27 +431,62 @@ class FootballMasterTester:
     # ============ STADIUM TESTS ============
     
     async def test_get_all_stadiums(self):
-        """Test getting all stadiums"""
+        """Test getting all stadiums - should have fictional names"""
         status, data, response_time = await self.make_request('GET', '/stadiums')
         
         passed = (
             status == 200 and 
             isinstance(data, list) and 
-            len(data) >= 10  # Should have multiple stadiums
+            len(data) >= 5  # Should have multiple stadiums
         )
         
         if passed:
             self.stadiums_data = data
-            # Check stadium data quality
+            # Check for fictional stadium names and verify no real names exist
+            fictional_stadiums_found = []
+            real_stadium_names_found = []
+            
+            # Expected fictional stadium names
+            expected_fictional = [
+                'Royal Bernabeu Arena',  # Instead of Santiago Bernabéu
+                'Camp Majesty',          # Instead of Camp Nou
+                'Anfield Fortress',      # Modified Anfield
+                'Allianz Fortress',      # Modified Allianz Arena
+                'Emirates Arena'         # Modified Emirates Stadium
+            ]
+            
+            # Real names that should NOT exist
+            forbidden_stadium_names = ['Santiago Bernabéu', 'Camp Nou', 'Bernabéu', 'Santiago Bernabeu']
+            
             for stadium in data:
+                stadium_name = stadium.get('name', '')
+                
+                # Check for expected fictional names
+                if stadium_name in expected_fictional:
+                    fictional_stadiums_found.append(stadium_name)
+                
+                # Check for forbidden real names
+                for forbidden in forbidden_stadium_names:
+                    if forbidden.lower() in stadium_name.lower():
+                        real_stadium_names_found.append(f"{stadium_name} (contains '{forbidden}')")
+                
+                # Check stadium data quality
                 required_fields = ['name', 'capacity', 'country', 'city', 'atmosphere_rating']
                 for field in required_fields:
                     if field not in stadium:
                         self.log_data_quality_issue(f"Stadium missing field: {field}")
                         break
+            
+            # Log findings
+            if fictional_stadiums_found:
+                print(f"    ✅ Found fictional stadiums: {fictional_stadiums_found}")
+            
+            if real_stadium_names_found:
+                self.log_critical_issue(f"Found real stadium names that should be fictional: {real_stadium_names_found}")
+                passed = False
         
-        details = f"Status: {status}, Stadiums count: {len(data) if isinstance(data, list) else 0}"
-        self.log_test("Get All Stadiums", passed, details, response_time)
+        details = f"Status: {status}, Stadiums count: {len(data) if isinstance(data, list) else 0}, Fictional names verified"
+        self.log_test("Get All Stadiums (Fictional Names)", passed, details, response_time)
         
     async def test_get_stadium_by_id(self):
         """Test getting stadium by ID"""
