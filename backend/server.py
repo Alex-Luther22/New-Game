@@ -109,7 +109,7 @@ async def get_all_teams(
     if league:
         teams = await db_manager.get_teams_by_league(league)
     else:
-        teams = await db_manager.get_all_teams()
+        teams = await db_manager.get_teams()
     
     if country:
         teams = [team for team in teams if team.country == country]
