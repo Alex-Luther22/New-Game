@@ -656,7 +656,7 @@ class DatabaseManager:
                 "pace": random.randint(max(45, base_rating - 20), min(85, base_rating)),
                 "shooting": random.randint(25, 65),
                 "passing": random.randint(max(60, base_rating - 15), min(90, base_rating + 5)),
-                "defending": random.randint(max(75, base_rating - 5), min(95, base_rating + 5)),
+                "defending": random.randint(max(70, min(base_rating - 5, 95)), min(95, base_rating + 5)),
                 "physicality": random.randint(max(70, base_rating - 10), min(95, base_rating + 5))
             }
         elif position == Position.MIDFIELDER:
