@@ -1121,6 +1121,10 @@ class FootballMasterTester:
             await self.test_performance_large_dataset()
             await self.test_concurrent_requests()
             
+            # Copyright Compliance Test
+            print("\n⚖️ COPYRIGHT COMPLIANCE TEST")
+            await self.test_copyright_compliance()
+            
         finally:
             await self.cleanup_session()
         
