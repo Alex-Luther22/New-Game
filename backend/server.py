@@ -451,7 +451,7 @@ async def search_players(
     """Search players by name or position"""
     # This would require a different data structure for efficient player search
     # For now, we'll search through all teams
-    all_teams = await db_manager.get_all_teams()
+    all_teams = await db_manager.get_teams()
     players = []
     
     for team in all_teams:
