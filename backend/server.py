@@ -182,7 +182,7 @@ async def get_stadium_by_id(stadium_id: str):
 async def create_match(match: Match):
     """Create a new match"""
     try:
-        match_id = await db_manager.create_match(match.dict())
+        match_id = await db_manager.create_match(match)
         return {"match_id": match_id, "message": "Match created successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
