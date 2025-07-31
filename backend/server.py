@@ -75,7 +75,7 @@ async def create_user_profile(profile: UserProfile):
         raise HTTPException(status_code=400, detail=str(e))
 
 @api_router.get("/users/{user_id}", response_model=UserProfile)
-async def get_user_profile(user_id: str = Path(..., description="User ID")):
+async def get_user_profile(user_id: str = FastAPIPath(..., description="User ID")):
     """Get user profile by ID"""
     profile = await db_manager.get_user_profile(user_id)
     if not profile:
