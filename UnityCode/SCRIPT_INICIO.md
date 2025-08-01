@@ -486,27 +486,159 @@ public class MatchData
 }
 ```
 
-## 🚀 PRÓXIMOS PASOS OPCIONALES (SI SE DESEA EXPANDIR)
+## 🚀 ROADMAP FUTURO Y PRÓXIMOS PATCHES
 
-1. **Sistema de Realidad Aumentada**:
-   - Integración con ARFoundation
-   - Experiencias de estadio en el mundo real
-   - Coleccionables virtuales geolocalizados
+### 📋 FASE 2: EXPANSIÓN Y MEJORAS (SEPTIEMBRE 2025)
 
-2. **Modo Entrenamiento Inteligente**:
-   - Entrenamientos personalizados por posición
-   - IA que analiza rendimiento y sugiere mejoras
-   - Minijuegos de habilidades específicas
+#### 🔧 PATCHES PRIORITARIOS (SEMANA 1-2)
+```yaml
+patch_2.1.0:
+  priority: HIGH
+  tasks:
+    - Optimizar detección de trucos para pantallas OLED
+    - Mejorar precision de IA en dificultad extrema  
+    - Fix: Balón ocasionalmente atraviesa porterías en corners
+    - Add: Vibración háptica para goles y trucos
+    - Optimize: Reducir 20MB más de RAM usage
+  
+patch_2.1.1:
+  priority: MEDIUM  
+  tasks:
+    - Add: 8 trucos adicionales (total 24)
+    - Improve: Física del césped húmedo/seco
+    - Fix: Sincronización multijugador en conexiones 3G
+    - Add: Modo nocturno con iluminación dinámica
+    - Optimize: Batching automático de texturas
+```
 
-3. **Sistema de Comentarios Adaptativo**:
-   - Comentarios generados proceduralmente
-   - Personalidad de comentaristas
-   - Reacciones contextuales al gameplay
+#### 🌟 CARACTERÍSTICAS NUEVAS (SEMANA 3-4)
+```yaml
+new_features:
+  real_weather:
+    description: "Clima real basado en geolocalización"
+    impact: "Césped húmedo afecta física del balón"
+    complexity: MEDIUM
+    
+  ar_stadium_mode:
+    description: "Proyectar estadio en mesa real con ARCore"
+    impact: "Experiencia de juego única"
+    complexity: HIGH
+    
+  ai_commentary:
+    description: "Comentarios generados por IA en tiempo real"
+    impact: "Mayor inmersión"
+    complexity: MEDIUM
+    
+  blockchain_cards:
+    description: "Cartas NFT de jugadores únicos"
+    impact: "Monetización y coleccionismo"
+    complexity: HIGH
+```
 
-4. **Mercado de Transferencias Dinámico**:
-   - Economía basada en oferta/demanda
-   - Eventos del mundo real que afectan valores
-   - Sistema de agentes y negociaciones
+### 🎯 FASE 3: OPTIMIZACIONES AVANZADAS (OCTUBRE 2025)
+
+#### ⚡ OPTIMIZACIONES TÉCNICAS
+```yaml
+performance_2.0:
+  target_fps:
+    tecno_spark_8c: 90fps  # Up from 60fps
+    mid_range_4gb: 120fps  # Up from 90fps
+    high_end_8gb: 144fps   # Up from 120fps
+    
+  memory_optimization:
+    target_ram_2gb: 150MB  # Down from 200MB
+    texture_streaming: true
+    audio_compression: advanced
+    
+  battery_optimization:
+    target_drain: 15%/hour # Down from 20%/hour
+    adaptive_quality: smart
+    thermal_throttling: intelligent
+```
+
+#### 🧠 IA Y MACHINE LEARNING
+```yaml
+ai_improvements:
+  smart_difficulty:
+    description: "IA aprende del estilo de juego del usuario"
+    adapts_to: "Skill level, preferred tricks, play style"
+    
+  predictive_controls:
+    description: "Predice intención del jugador"
+    reduces: "Input lag, gesture recognition errors"
+    
+  procedural_teams:
+    description: "Genera equipos únicos automáticamente"
+    creates: "Infinite teams, balanced ratings"
+```
+
+### 🌐 FASE 4: EXPANSIÓN GLOBAL (NOVIEMBRE 2025)
+
+#### 🗺️ MULTI-REGIÓN Y IDIOMAS
+```yaml
+globalization:
+  languages: 
+    - Spanish (✅ Completed)
+    - English (✅ Completed)  
+    - Portuguese (🔄 In Progress)
+    - French (🔄 In Progress)
+    - German (🔄 In Progress)
+    - Italian (📋 Planned)
+    - Japanese (📋 Planned)
+    - Arabic (📋 Planned)
+    
+  regional_teams:
+    - Liga MX ficticia (50 equipos)
+    - Premier League ficticia (20 equipos)
+    - Bundesliga ficticia (18 equipos)
+    - Serie A ficticia (20 equipos)
+    
+  cultural_adaptations:
+    - Diferentes estilos de celebración
+    - Música regional en estadios
+    - Comentarios localizados
+```
+
+## 🔄 SISTEMA DE VERSIONADO Y RELEASES
+
+### 📦 ESTRATEGIA DE RELEASES
+```yaml
+release_cycle:
+  major_updates: "Cada 3 meses (2.0, 3.0, 4.0)"
+  minor_updates: "Cada mes (2.1, 2.2, 2.3)"
+  patches: "Cada 2 semanas (2.1.1, 2.1.2)"
+  hotfixes: "Según necesidad crítica"
+
+version_current: "2.0.0 (Agosto 2025)"
+version_next: "2.1.0 (Septiembre 2025)"
+
+compatibility:
+  unity_min: "2021.3 LTS"
+  unity_target: "2022.3 LTS"
+  android_min: "API 26 (Android 8.0)"
+  android_target: "API 34 (Android 14)"
+  ios_min: "iOS 12.0"
+  ios_target: "iOS 17.0"
+```
+
+### 🛠️ HERRAMIENTAS DE DESARROLLO MEJORADAS
+```yaml
+dev_tools_roadmap:
+  automated_testing:
+    unit_tests: "95% coverage objetivo"
+    integration_tests: "Backend + Frontend"
+    performance_tests: "FPS monitoring automático"
+    
+  ci_cd_pipeline:
+    build_automation: "Unity Cloud Build"
+    testing_automation: "Automated device farm"
+    deployment: "Google Play + App Store automático"
+    
+  monitoring:
+    crash_reporting: "Unity Analytics + Firebase"
+    performance_monitoring: "FPS, RAM, Battery en tiempo real"
+    user_analytics: "Heatmaps de trucos más usados"
+```
 
 ## ✅ ESTADO FINAL CERTIFICADO
 - **Versión**: 2.0.0
