@@ -187,6 +187,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/controles" element={<TouchControlsDemo />} />
         </Routes>
+        {/* ChatWidget para comunicación con DeepSeek */}
+        <ChatWidget />
       </BrowserRouter>
     </div>
   );
